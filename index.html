@@ -1,164 +1,528 @@
-<!DOCTYPE html><html lang="th">
+<!DOCTYPE html>
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>Yulgang Bot Simulation - นักดาบ</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #121212;
-      color: white;
-      padding: 10px;
-    }
-    #top-panel label, #top-panel input, #top-panel select, #top-panel span {
-      margin-right: 10px;
-    }
-    .section-box {
-      border: 1px solid #555;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-    #main-container {
-      display: flex;
-    }
-    #left-panel, #right-panel {
-      flex: 1;
-      padding: 10px;
-    }
-    textarea {
-      width: 100%; height: 100px;
-      background: #000; color: #0f0; font-family: monospace;
-    }
-    button {
-      margin-right: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ygLight Bot - Yulgang Simulation v3</title>
+    <style>
+        /* --- Core Styles & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Tahoma:wght@400;700&display=swap');
+        :root { --main-bg: #f0f0f0; --border-out-top-left: #fff; --border-out-bottom-right: #808080; --border-in-top-left: #808080; --border-in-bottom-right: #fff; --inactive-tab-bg: #d4d0c8; }
+        * { box-sizing: border-box; user-select: none; }
+        body { font-family: 'Tahoma', sans-serif; font-size: 11px; background: #3a6ea5; margin: 0; padding: 2px; color: #000; overflow: hidden; }
+
+        /* --- Window Styles --- */
+        .main-window { width: 800px; height: 600px; background: var(--main-bg); border: 1px solid #0831d9; box-shadow: 1px 1px 5px rgba(0,0,0,0.5); display: flex; flex-direction: column; margin: 20px auto; }
+        .title-bar { background: linear-gradient(to bottom, #005cda, #004ba9); color: white; padding: 3px 5px; font-weight: bold; display: flex; align-items: center; height: 22px; cursor: default; }
+        .title-bar-text { flex-grow: 1; }
+        .title-bar-icon { width: 16px; height: 16px; margin-right: 4px; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACLSURBVDhPY/j///9/AymASYQBAAEYQJsu7ueK8T8i40A0A0j2XwYxBiAhAGsgIgYYA1KBgAAGGgC18P+TqVj/M3My/2dkZPzPyMr4n5GR8T8jK+N/RlbG/4ysjP8ZWRn/M7IyfmdkZfxPyMr4/w9A7X//MzIy/mdkZfyf0ZUBKkCqfQAAAHSkAYYZbftAAAAAAElFTkSuQmCC') no-repeat center center; }
+        .window-controls button { width: 18px; height: 16px; border: 1px outset var(--border-out-top-left); background: var(--inactive-tab-bg); font-family: 'Marlett', 'Webdings'; font-size: 10px; margin-left: 2px; line-height: 12px; text-align: center; }
+        
+        /* --- Panel & Layout Styles --- */
+        .content-area { display: flex; flex-grow: 1; padding: 2px; overflow: hidden; }
+        .panel { border: 1px solid; border-color: var(--border-in-top-left) var(--border-out-top-left) var(--border-out-top-left) var(--border-in-top-left); background: var(--main-bg); padding: 1px; }
+        .panel-inset { border: 1px solid; border-color: var(--border-in-top-left) var(--border-out-top-left) var(--border-out-top-left) var(--border-in-top-left); box-shadow: inset 1px 1px 0 #c0c0c0; }
+        .group-box { border: 1px solid var(--border-in-top-left); padding: 10px 5px 5px 5px; margin: 5px; position: relative; }
+        .group-box-title { position: absolute; top: -7px; left: 8px; background: var(--main-bg); padding: 0 4px; }
+        .left-panel { width: 480px; display: flex; flex-direction: column; padding-right: 2px; }
+        .right-panel { width: 320px; display: flex; flex-direction: column; }
+
+        /* --- Tab Control Styles --- */
+        .tab-bar { display: flex; border-bottom: 1px solid var(--border-in-top-left); padding-left: 3px; height: 21px; }
+        .tab-button { padding: 3px 8px; border: 1px solid; border-color: var(--border-out-top-left) var(--border-in-top-left) var(--border-in-top-left) var(--border-out-top-left); border-bottom: none; background: var(--inactive-tab-bg); position: relative; top: 1px; margin-right: 1px; cursor: pointer; }
+        .tab-button.active { background: var(--main-bg); border-bottom: 1px solid var(--main-bg); font-weight: bold; }
+        .tab-content { display: none; height: 100%; overflow-y: auto; }
+        .tab-content.active { display: block; }
+
+        /* --- Login Screen --- */
+        #login-screen { width: 100%; height: 100%; display: flex; }
+        .login-box { margin: 50px auto; width: 250px; padding: 20px; }
+        .login-box img { display: block; margin: 10px auto; }
+        .login-box .form-row { display: flex; align-items: center; margin-bottom: 8px; }
+        .login-box label { width: 60px; }
+        .login-box input { flex-grow: 1; }
+        .login-box button { display: block; width: 100px; margin: 15px auto 0 auto; }
+        
+        /* --- Main App UI Elements --- */
+        .top-bar { padding: 3px; display: grid; grid-template-columns: 1fr 1fr; grid-gap: 5px; border-bottom: 1px solid #c0c0c0; }
+        .top-bar-section { display: flex; align-items: center; }
+        .top-bar-section label { white-space: nowrap; margin-right: 4px; }
+        .top-bar-section select, .top-bar-section input { flex-grow: 1; width: 100px; }
+        .top-bar-stats { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+        .map-view { height: 250px; background: url(https://i.imgur.com/vH9v5cI.png) center/cover; position: relative; }
+        .map-controls { padding: 4px; display: flex; justify-content: center; gap: 4px; background: var(--inactive-tab-bg); }
+        .log-panel, .environment-panel { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .log-area, .env-area { flex-grow: 1; background: white; border: 1px inset var(--border-in-top-left); padding: 3px; font-family: 'Courier New', monospace; font-size: 10px; overflow-y: scroll; }
+        #logArea { background-color: black; color: white; }
+        .log-system { color: #00FF00; } .log-exp { color: #FFFF00; } .log-attack { color: #FF4757; } .log-item { color: #26DE81; } .log-error { color: #FF0000; } .log-info { color: #87CEEB; } .log-skill { color: #f088f8; } .log-quest { color: #99ff99; }
+        .info-tabs .tab-content { padding: 5px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+        .stat-item label { width: 45px; }
+        .stat-item span { font-weight: bold; }
+        .progress-bar { height: 12px; background: #c0c0c0; border: 1px inset var(--border-in-top-left); position: relative; flex-grow: 1; }
+        .progress-fill { height: 100%; position: absolute; left:0; top:0; }
+        .hp-fill { background: #FF0000; } .mp-fill { background: #0000FF; } .exp-fill { background: #ffa500; } .rage-fill { background: #8b0000; }
+        
+        /* --- General Controls --- */
+        input, select, button { font-family: 'Tahoma', sans-serif; font-size: 11px; border: 1px solid; border-color: var(--border-in-top-left) var(--border-out-top-left) var(--border-out-top-left) var(--border-in-top-left); padding: 2px 4px; }
+        button { background: var(--inactive-tab-bg); border-color: var(--border-out-top-left) var(--border-in-top-left) var(--border-in-top-left) var(--border-out-top-left); min-width: 70px; cursor: pointer; }
+        button:active { border-color: var(--border-in-top-left) var(--border-out-top-left) var(--border-out-top-left) var(--border-in-top-left); }
+        #app-screen { display: none; }
+        .table-list { width: 100%; border-collapse: collapse; }
+        .table-list th, .table-list td { border: 1px solid #c0c0c0; padding: 2px 4px; text-align: left; }
+        .table-list th { background: var(--inactive-tab-bg); }
+        .env-area .targeted { background-color: #ffecb3; }
+        .env-area .clickable:hover { background-color: #e3f2fd; cursor: pointer; }
+
+        /* --- NPC Dialog --- */
+        #npc-dialog-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .dialog-window { width: 350px; background: var(--main-bg); border: 1px solid #0831d9; box-shadow: 2px 2px 8px rgba(0,0,0,0.6); }
+        .dialog-title-bar { background: linear-gradient(to bottom, #005cda, #004ba9); color: white; padding: 3px 5px; font-weight: bold; }
+        .dialog-content { padding: 15px; font-size: 12px; line-height: 1.5; }
+        .dialog-buttons { padding: 8px; text-align: right; background: var(--inactive-tab-bg); border-top: 1px solid var(--border-in-top-left); }
+        .dialog-buttons button { margin-left: 5px; }
+
+    </style>
 </head>
 <body>
-  <div id="top-panel">
-    <label>เซิร์ฟเวอร์:</label>
-    <select><option>ดินแดนสงคราม</option></select>
-    <label>ชื่อตัวละคร:</label>
-    <input type="text" value="เทพกาว">
-    <label>LV:</label><span id="lv">10</span>
-    <label>HP:</label> <progress id="hp-bar" value="214" max="214"></progress>
-    <label>MP:</label> <progress id="mp-bar" value="150" max="150"></progress>
-    <label>EXP:</label> <progress id="exp-bar" value="633" max="938"></progress>
-    <button onclick="attack()">⚔️ โจมตี</button>
-    <button onclick="useSkill()">🌀 ใช้สกิล</button>
-  </div>  <div id="main-container">
-    <div id="left-panel">
-      <div class="section-box">
-        <h3>แผนที่ (Central Valley)</h3>
-        <canvas id="map" width="450" height="300"></canvas>
-      </div>
-      <div class="section-box">
-        <h3>ข้อความ</h3>
-        <textarea id="log-box" readonly></textarea>
-      </div>
-    </div><div id="right-panel">
-  <div class="section-box">
-    <h3>สถานะตัวละคร</h3>
-    <div id="char-status"></div>
-  </div>
-  <div class="section-box">
-    <h3>อุปกรณ์ที่สวมใส่</h3>
-    <ul id="equipment-list">
-      <li>ดาบไม้</li>
-      <li>เสื้อผ้าฝึกหัด</li>
-      <li>รองเท้าผ้าฝึกหัด</li>
-    </ul>
-  </div>
-  <div class="section-box">
-    <h3>สกิลใช้งาน</h3>
-    <ul id="skill-list">
-      <li>Sharpened Swords</li>
-      <li>Sword Drift</li>
-    </ul>
-  </div>
-  <div class="section-box">
-    <h3>เควส (เลเวล 1–20)</h3>
-    <ol id="quest-list">
-      <li>ล่าบ็อบแคท 10 ตัว</li>
-      <li>ส่งยาให้ NPC Hugh</li>
-    </ol>
-  </div>
-  <div class="section-box">
-    <h3>ศัตรูรอบตัว</h3>
-    <table>
-      <thead><tr><th>ชื่อ</th><th>เลเวล</th><th>ประเภท</th></tr></thead>
-      <tbody id="monster-list"></tbody>
-    </table>
-  </div>
-  <div class="section-box">
-    <h3>ของที่ได้รับ</h3>
-    <ul id="drop-list"></ul>
-  </div>
+
+<div class="main-window">
+    <div class="title-bar"><div class="title-bar-icon"></div><span class="title-bar-text">ygLight Bot</span><div class="window-controls"><button>0</button><button>1</button><button>r</button></div></div>
+    
+    <div id="login-screen" class="content-area">
+        <div class="login-left"><div class="group-box login-box"><div class="group-box-title">ระบบตรวจสอบสมาชิก</div><div class="form-row"><label for="username">ชื่อสมาชิก:</label><input type="text" id="username" value="my_account"></div><div class="form-row"><label for="password">รหัสผ่าน:</label><input type="password" id="password" value="123456"></div><img src="https://i.imgur.com/G5T51Ep.png" alt="login avatar"><button onclick="login()">Login</button></div></div>
+        <div class="login-right panel"><div class="tab-bar"><div class="tab-button active">สถานะ</div></div><div class="tab-content active" style="padding: 10px;">ยังไม่ได้เชื่อมต่อกับเซิร์ฟเวอร์...</div></div>
+    </div>
+
+    <div id="app-screen" class="content-area">
+        <div class="left-panel">
+            <div class="panel">
+                <div class="top-bar">
+                    <div><div class="top-bar-section"><label for="server">เซิร์ฟเวอร์:</label><select id="server"><option>พิชิตสุริยัน</option></select></div><div class="top-bar-section"><label for="char-name">ชื่อ:</label><input type="text" id="char-name" value="มือใหม่หัดบอท" readonly></div></div>
+                    <div><div class="top-bar-section"><label for="char-select">ตัวละคร:</label><select id="char-select"><option>1</option></select><label for="pass">รหัสผ่าน:</label><input type="password" id="pass" value="********" readonly></div><div class="top-bar-section"><button id="loginBtn" onclick="toggleLogin()">Login</button><button id="logoutBtn" style="display:none;" onclick="toggleLogin()">Logout</button></div></div>
+                </div>
+                <div class="top-bar-stats panel-inset">LV: <span id="stat-lv-top" style="margin-right:10px;">0</span> พลังชีวิต: <div class="progress-bar" style="width: 80px;"><div id="hp-bar-top" class="progress-fill hp-fill"></div></div><span id="hp-percent-top">0%</span> พลังปราณ: <div class="progress-bar" style="width: 80px;"><div id="mp-bar-top" class="progress-fill mp-fill"></div></div><span id="mp-percent-top">0%</span> ประสบการณ์: <div class="progress-bar" style="width: 80px;"><div id="exp-bar-top" class="progress-fill exp-fill"></div></div><span id="exp-percent-top">0%</span></div>
+            </div>
+            <div class="panel" style="flex-grow: 1; margin-top: 2px; display: flex; flex-direction: column;">
+                <div class="tab-bar"><div class="tab-button active">ข่าวสาร</div><div class="tab-button">แผนที่</div></div>
+                <div class="tab-content active" style="flex-grow: 1; display:flex; flex-direction:column;"><div class="map-view"></div><div class="map-controls"><button>Pet</button><button>Track</button><button>Shop</button><button>Monster</button><button>NPC</button><button>Path</button></div></div>
+            </div>
+            <div class="log-panel panel" style="height: 150px; margin-top: 2px;"><div class="tab-bar"><div class="tab-button active">ข้อความ</div></div><div id="logArea" class="log-area"></div></div>
+        </div>
+        <div class="right-panel">
+            <div class="panel" style="flex-grow:1; display: flex; flex-direction: column;">
+                 <div class="tab-bar info-tabs">
+                    <div class="tab-button active" onclick="showInfoTab(event, 'status')">สถานะ</div>
+                    <div class="tab-button" onclick="showInfoTab(event, 'skills')">ทักษะ</div>
+                    <div class="tab-button" onclick="showInfoTab(event, 'items')">ไอเทม</div>
+                    <div class="tab-button" onclick="showInfoTab(event, 'quests')">ภารกิจ</div>
+                    <div class="tab-button" onclick="showInfoTab(event, 'control')">ควบคุม</div>
+                 </div>
+                 <div id="tab-status" class="tab-content active"><div class="group-box"><div class="group-box-title">ข้อมูลพื้นฐาน</div><p><strong>ชื่อ:</strong> <span id="info-name">N/A</span> <strong>อาชีพ:</strong> <span id="info-class">N/A</span></p><p><strong>LV:</strong> <span id="info-level">0</span> <strong>ค่าพิชิตศัตรู:</strong> <span id="info-honor">0</span></p><p><strong>เงิน:</strong> <span id="info-money">0</span> สลึง</p><div style="margin: 4px 0;"><label>พลังชีวิต:</label> <div class="progress-bar"><div id="hp-bar-main" class="progress-fill hp-fill"></div></div><span id="hp-text">0/0</span></div><div style="margin: 4px 0;"><label>พลังปราณ:</label> <div class="progress-bar"><div id="mp-bar-main" class="progress-fill mp-fill"></div></div><span id="mp-text">0/0</span></div><div style="margin: 4px 0;"><label>ความโกรธ:</label> <div class="progress-bar"><div id="rage-bar-main" class="progress-fill rage-fill"></div></div><span id="rage-text">0/0</span></div><div style="margin: 4px 0;"><label>ประสบการณ์:</label> <div class="progress-bar"><div id="exp-bar-main" class="progress-fill exp-fill"></div></div><span id="exp-text">0/0</span></div></div><div class="group-box"><div class="group-box-title">ค่าความสามารถ</div><div class="stat-grid"><div class="stat-item"><label>โจมตี:</label> <span id="stat-atk">0</span></div><div class="stat-item"><label>แม่นยำ:</label> <span id="stat-acc">0</span></div><div class="stat-item"><label>ป้องกัน:</label> <span id="stat-def">0</span></div><div class="stat-item"><label>หลบหลีก:</label> <span id="stat-eva">0</span></div><div class="stat-item"><label>พลังปราณ:</label> <span id="stat-chi">0</span></div><div class="stat-item"><label>โจมตีวิชา:</label> <span id="stat-skill-atk">0</span></div><div class="stat-item"><label>ป้องกันวิชา:</label> <span id="stat-skill-def">0</span></div><div class="stat-item"><label>HP:</label> <span id="stat-hp">0</span></div></div></div></div>
+                 <div id="tab-skills" class="tab-content"><table class="table-list" id="skills-table"><thead><tr><th>ชื่อสกิล</th><th>ระดับ</th><th>MP</th></tr></thead><tbody></tbody></table></div>
+                 <div id="tab-items" class="tab-content"><table class="table-list" id="items-table"><thead><tr><th>ชื่อไอเทม</th><th>จำนวน</th></tr></thead><tbody></tbody></table></div>
+                 <div id="tab-quests" class="tab-content" id="quests-log"><div id="quests-list"></div></div>
+                 <div id="tab-control" class="tab-content"><div class="group-box"><div class="group-box-title">ควบคุมการทำงาน</div><label><input type="checkbox" id="auto-hunt-check"> เริ่มทำงานอัตโนมัติ</label><br><label><input type="checkbox" id="auto-pot-check"> ใช้ยาอัตโนมัติ</label><br><label><input type="checkbox" id="auto-pickup-check"> เก็บของอัตโนมัติ</label><br><label><input type="checkbox" id="auto-buff-check"> ใช้บัพอัตโนมัติ</label><br></div></div>
+            </div>
+             <div class="environment-panel panel" style="height: 180px; margin-top: 2px;">
+                 <div class="tab-bar" id="env-tabs">
+                    <div class="tab-button active" onclick="showEnvTab(event, 'monsters')">Environment</div>
+                    <div class="tab-button" onclick="showEnvTab(event, 'npcs')">NPC</div>
+                 </div>
+                <div id="env-monsters" class="env-area active"><table class="table-list"><thead><tr><th>ID</th><th>ชื่อ</th><th>ระยะ</th><th>LV</th><th>สถานะ</th></tr></thead><tbody id="env-tbody-monsters"></tbody></table></div>
+                <div id="env-npcs" class="env-area"><table class="table-list"><thead><tr><th>ID</th><th>ชื่อ</th><th>ตำแหน่ง</th><th>ระยะ</th></tr></thead><tbody id="env-tbody-npcs"></tbody></table></div>
+            </div>
+        </div>
+    </div>
 </div>
 
-  </div><script>
-const log = (msg) => {
-  const box = document.getElementById('log-box');
-  box.value += `\n> ${msg}`;
-  box.scrollTop = box.scrollHeight;
+<div id="npc-dialog-overlay">
+    <div class="dialog-window">
+        <div class="dialog-title-bar" id="dialog-title">NPC Name</div>
+        <div class="dialog-content" id="dialog-text">...</div>
+        <div class="dialog-buttons" id="dialog-buttons-container"></div>
+    </div>
+</div>
+
+<script>
+// --- YULGANG DATABASE (BASED ON PC TH) ---
+const YULGANG_DB = {
+    monsters: {
+        "1": { name: "บ็อบแคท", level: 1, hp: 45, exp: 10, atk: 5, def: 1, drops: { 'หนังบ็อบแคท': 0.5, 'เงิน': 0.8 } },
+        "2": { name: "หมาป่า", level: 3, hp: 80, exp: 15, atk: 8, def: 2, drops: { 'ยาแดง(เล็ก)': 0.3, 'เงิน': 0.9, 'เขี้ยวหมาป่า': 0.25 } },
+        "3": { name: "หมูป่า", level: 5, hp: 120, exp: 20, atk: 12, def: 5, drops: { 'ยาแดง(เล็ก)': 0.4, 'เงิน': 1.0, 'เนื้อหมูป่า': 0.3 } },
+        "4": { name: "โจรป่า", level: 10, hp: 210, exp: 50, atk: 25, def: 10, drops: { 'ยาแดง(กลาง)': 0.2, 'เงิน': 1.0, 'ดาบฝึกหัด': 0.05 } },
+        "5": { name: "นักดาบโจรป่า", level: 12, hp: 250, exp: 65, atk: 30, def: 12, drops: { 'ยาแดง(กลาง)': 0.25, 'เงิน': 1.0, 'เสื้อหนัง': 0.05, 'หินเสริมพลัง': 0.01 } },
+    },
+    npcs: {
+        "1": { id: 1, name: "เฒ่ายา", title: "เจ้าของร้านยา", location: "เมืองฮอนบัล", dist: 15 },
+        "2": { id: 2, name: "โล้นเหล็กไหล", title: "ช่างตีเหล็ก", location: "เมืองฮอนบัล", dist: 25 },
+        "3": { id: 3, name: "เจ้าเมืองฮอนบัล", title: "เจ้าเมือง", location: "เมืองฮอนบัล", dist: 50 },
+    },
+    items: {
+        "leather": { name: "หนังบ็อบแคท", type: "quest" },
+        "wolf_fang": { name: "เขี้ยวหมาป่า", type: "quest" },
+        "red_pot_s": { name: "ยาแดง(เล็ก)", type: "potion" },
+    },
+    quests: {
+        "1": {
+            id: 1,
+            title: "ยาของเฒ่ายา",
+            npcId: 1,
+            startDialog: "โอ้ย... ปวดหลังจริงๆเลย เจ้าหนู! พอดีเลย ข้ากำลังต้องการ 'หนังบ็อบแคท' 5 ชิ้น มาทำยาแก้ปวดหลังให้ข้าหน่อยได้หรือไม่?",
+            objectives: [{ type: "collect", itemName: "หนังบ็อบแคท", amount: 5 }],
+            reward: { exp: 100, money: 500 },
+            status: "available" // available, active, completed
+        }
+    }
 };
 
-const monsters = [
-  { name: 'Bobcat', level: 3, type: 'Counter-Attack', drop: ['หนังบ็อบแคท'] },
-  { name: 'Toad', level: 5, type: 'Counter-Attack', drop: ['พิษคางคก'] },
-  { name: 'Wolf', level: 12, type: 'Aggressive', drop: ['เขี้ยวหมาป่า', 'ขนหนา'] },
-  { name: 'Blood Wolf', level: 20, type: 'Aggressive', drop: ['เลือดหมาป่าแดง', 'เขี้ยว'] },
-];
+const CHARACTER_DATA = {
+    name: "มือใหม่หัดบอท", class: "นักดาบ", level: 1, honor: 0, money: 1000,
+    hp: 100, maxHp: 100, mp: 50, maxMp: 50, rage: 0, maxRage: 1000, exp: 0, maxExp: 100,
+    stats: { atk: 15, acc: 20, def: 5, eva: 5, chi: 5, skill_atk: 5, skill_def: 5, hp_stat: 10 },
+    skills: [], inventory: [{ name: 'ยาแดง(เล็ก)', quantity: 10 }], activeQuests: []
+};
 
-function populateMonsters() {
-  const tbody = document.getElementById('monster-list');
-  monsters.forEach(m => {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${m.name}</td><td>${m.level}</td><td>${m.type}</td>`;
-    tbody.appendChild(row);
-  });
+// --- APPLICATION STATE ---
+let gameState = {};
+let gameInterval;
+
+// --- UI SELECTORS ---
+const ui = {
+    loginScreen: document.getElementById('login-screen'),
+    appScreen: document.getElementById('app-screen'),
+    logArea: document.getElementById('logArea'),
+    envTbodyMonsters: document.getElementById('env-tbody-monsters'),
+    envTbodyNpcs: document.getElementById('env-tbody-npcs'),
+    itemsTbody: document.querySelector('#items-table tbody'),
+    skillsTbody: document.querySelector('#skills-table tbody'),
+    questsList: document.getElementById('quests-list'),
+    loginBtn: document.getElementById('loginBtn'),
+    logoutBtn: document.getElementById('logoutBtn'),
+    dialogOverlay: document.getElementById('npc-dialog-overlay'),
+    dialogTitle: document.getElementById('dialog-title'),
+    dialogText: document.getElementById('dialog-text'),
+    dialogButtons: document.getElementById('dialog-buttons-container'),
+};
+
+// --- UI LOGIC ---
+function login() {
+    ui.loginScreen.style.display = 'none';
+    ui.appScreen.style.display = 'flex';
+    addLog("กำลังเชื่อมต่อเซิร์ฟเวอร์ พิชิตสุริยัน...", "log-info");
+    setTimeout(() => { addLog("ตรวจสอบ ID และรหัสผ่าน...", "log-info"); setTimeout(toggleLogin, 1000); }, 500);
 }
 
-let currentEXP = 633;
-let level = 10;
-const expBar = document.getElementById('exp-bar');
-const lvText = document.getElementById('lv');
-
-function gainEXP(amount) {
-  currentEXP += amount;
-  const max = 100 + level * 80;
-  expBar.max = max;
-  expBar.value = currentEXP;
-  if (currentEXP >= max) {
-    level++;
-    lvText.textContent = level;
-    currentEXP = currentEXP - max;
-    log(`🎉 เลเวลอัปเป็น ${level}`);
-  }
+function toggleLogin() {
+    gameState.loggedIn = !gameState.loggedIn;
+    if (gameState.loggedIn) {
+        ui.loginBtn.style.display = 'none';
+        ui.logoutBtn.style.display = 'inline-block';
+        addLog(`[SYSTEM] LOGIN_SERVER_00`, 'log-system');
+        addLog(`[SYSTEM] พบตัวละครที่จุดเซฟ`, 'log-system');
+        initializeGame();
+    } else {
+        ui.loginBtn.style.display = 'inline-block';
+        ui.logoutBtn.style.display = 'none';
+        addLog("ออกจากระบบเรียบร้อย", "log-error");
+        resetGame();
+    }
+    updateUI();
 }
 
-function attack() {
-  const m = monsters[Math.floor(Math.random() * monsters.length)];
-  log(`⚔️ โจมตี ${m.name} ได้รับ EXP +${m.level * 5}`);
-  gainEXP(m.level * 5);
-  // drop item
-  const drop = m.drop[Math.floor(Math.random() * m.drop.length)];
-  const ul = document.getElementById('drop-list');
-  const li = document.createElement('li');
-  li.textContent = `${drop} (จาก ${m.name})`;
-  ul.appendChild(li);
-  log(`🎁 ได้รับไอเท็ม: ${drop}`);
+function showInfoTab(event, tabName) {
+    document.querySelectorAll('.info-tabs .tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.info-tabs .tab-button').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    event.target.classList.add('active');
 }
 
-function useSkill() {
-  const mpBar = document.getElementById('mp-bar');
-  if (mpBar.value >= 10) {
-    mpBar.value -= 10;
-    log(`🌀 ใช้สกิล Sword Drift สำเร็จ MP -10`);
-  } else {
-    log(`❌ MP ไม่เพียงพอ`);
-  }
+function showEnvTab(event, tabName) {
+    document.querySelectorAll('#env-tabs ~ .env-area').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('#env-tabs .tab-button').forEach(el => el.classList.remove('active'));
+    document.getElementById(`env-${tabName}`).classList.add('active');
+    event.target.classList.add('active');
 }
 
-window.onload = populateMonsters;
-</script></body>
+function addLog(message, className) {
+    const timestamp = new Date().toLocaleTimeString('th-TH', { hour12: false });
+    const logEntry = document.createElement('div');
+    logEntry.className = className;
+    logEntry.innerHTML = `[${timestamp}] ${message}`;
+    ui.logArea.appendChild(logEntry);
+    ui.logArea.scrollTop = ui.logArea.scrollHeight;
+}
+
+// --- NPC DIALOG LOGIC ---
+function openNpcDialog(npcId) {
+    const npc = YULGANG_DB.npcs[npcId];
+    if (!npc) return;
+    
+    ui.dialogTitle.textContent = npc.name;
+    
+    // Check for available quests
+    const availableQuest = Object.values(YULGANG_DB.quests).find(q => q.npcId === npc.id && q.status === 'available');
+    
+    if (availableQuest) {
+        ui.dialogText.textContent = availableQuest.startDialog;
+        ui.dialogButtons.innerHTML = `
+            <button onclick="acceptQuest(${availableQuest.id})">[รับเควส]</button>
+            <button onclick="closeNpcDialog()">[ข้าไม่สนใจ]</button>
+        `;
+    } else {
+        ui.dialogText.textContent = "มีอะไรให้ข้ารับใช้หรือไม่?";
+        ui.dialogButtons.innerHTML = `<button onclick="closeNpcDialog()">[ลาก่อน]</button>`;
+    }
+    
+    ui.dialogOverlay.style.display = 'flex';
+}
+
+function closeNpcDialog() {
+    ui.dialogOverlay.style.display = 'none';
+}
+
+// --- QUEST LOGIC ---
+function acceptQuest(questId) {
+    const quest = YULGANG_DB.quests[questId];
+    if (!quest || quest.status !== 'available') return;
+    
+    quest.status = 'active';
+    const questData = {
+        id: quest.id,
+        title: quest.title,
+        objectives: JSON.parse(JSON.stringify(quest.objectives)), // Deep copy
+        progress: {}
+    };
+    questData.objectives.forEach(obj => {
+        if (obj.type === 'collect') {
+            questData.progress[obj.itemName] = 0;
+        }
+    });
+    
+    gameState.character.activeQuests.push(questData);
+    addLog(`รับภารกิจใหม่: ${quest.title}`, 'log-quest');
+    closeNpcDialog();
+    updateUI();
+}
+
+function updateQuestProgress(itemName) {
+    gameState.character.activeQuests.forEach(quest => {
+        quest.objectives.forEach(obj => {
+            if (obj.type === 'collect' && obj.itemName === itemName) {
+                const currentAmount = quest.progress[itemName];
+                if (currentAmount < obj.amount) {
+                    quest.progress[itemName]++;
+                    addLog(`[ภารกิจ] เก็บ ${itemName} (${quest.progress[itemName]}/${obj.amount})`, 'log-quest');
+                    // Check completion
+                    checkQuestCompletion(quest);
+                }
+            }
+        });
+    });
+}
+
+function checkQuestCompletion(quest) {
+    const isCompleted = quest.objectives.every(obj => {
+        if (obj.type === 'collect') {
+            return quest.progress[obj.itemName] >= obj.amount;
+        }
+        return true;
+    });
+
+    if (isCompleted) {
+        const dbQuest = YULGANG_DB.quests[quest.id];
+        dbQuest.status = 'completed';
+        addLog(`[ภารกิจ] ${quest.title} สำเร็จแล้ว! กลับไปคุยกับ ${YULGANG_DB.npcs[dbQuest.npcId].name}`, 'log-quest');
+    }
+}
+
+
+// --- GAME LOGIC ---
+function initializeGame() {
+    gameState = {
+        loggedIn: true,
+        autoHunt: false,
+        autoPotion: false,
+        autoPickup: false,
+        targetId: null,
+        character: JSON.parse(JSON.stringify(CHARACTER_DATA)),
+        environment: { monsters: [], npcs: [] }
+    };
+    
+    // Spawn initial monsters & npcs
+    gameState.environment.monsters = [
+        { id: 1, dbId: "1", currentHp: YULGANG_DB.monsters["1"].hp, dist: 25 },
+        { id: 2, dbId: "1", currentHp: YULGANG_DB.monsters["1"].hp, dist: 18 },
+        { id: 3, dbId: "2", currentHp: YULGANG_DB.monsters["2"].hp, dist: 45 },
+    ];
+    gameState.environment.npcs = Object.values(YULGANG_DB.npcs);
+    
+    addLog(`ยินดีต้อนรับ, ${gameState.character.name}!`, 'log-exp');
+    updateUI();
+}
+
+function resetGame() {
+    gameState = {};
+    updateUI();
+}
+
+function gameLoop() {
+    if (!gameState.loggedIn || !gameState.autoHunt) return;
+
+    if (gameState.targetId === null) {
+        const availableTargets = gameState.environment.monsters.filter(m => m.currentHp > 0);
+        if (availableTargets.length > 0) {
+            availableTargets.sort((a,b) => a.dist - b.dist);
+            gameState.targetId = availableTargets[0].id;
+            const targetInfo = YULGANG_DB.monsters[availableTargets[0].dbId];
+            addLog(`ค้นพบเป้าหมาย: ${targetInfo.name} LV.${targetInfo.level}`, 'log-info');
+        } else { return; }
+    }
+    
+    const target = gameState.environment.monsters.find(m => m.id === gameState.targetId);
+    if (!target || target.currentHp <= 0) { gameState.targetId = null; return; }
+
+    const targetInfo = YULGANG_DB.monsters[target.dbId];
+    let damage = Math.max(1, Math.floor(gameState.character.stats.atk + (Math.random() * 5) - targetInfo.def));
+    target.currentHp = Math.max(0, target.currentHp - damage);
+    addLog(`โจมตี ${targetInfo.name}, สร้างความเสียหาย ${damage} หน่วย (HP: ${target.currentHp}/${targetInfo.hp})`, 'log-attack');
+    
+    if (target.currentHp <= 0) {
+        handleMonsterDefeat(target);
+    } else {
+        setTimeout(() => {
+             const monsterDamage = Math.max(1, Math.floor(targetInfo.atk - (gameState.character.stats.def/2)));
+             gameState.character.hp = Math.max(0, gameState.character.hp - monsterDamage);
+             addLog(`${targetInfo.name} โจมตีกลับ, ได้รับความเสียหาย ${monsterDamage} หน่วย`, 'log-error');
+        }, 500);
+    }
+    
+    if (gameState.autoPotion && (gameState.character.hp / gameState.character.maxHp < 0.6)) {
+        gameState.character.hp = Math.min(gameState.character.maxHp, gameState.character.hp + 50);
+        addLog(`ใช้ยาแดง(เล็ก), ฟื้นฟูพลังชีวิต 50 หน่วย`, 'log-system');
+    }
+    updateUI();
+}
+
+function handleMonsterDefeat(target) {
+    const targetInfo = YULGANG_DB.monsters[target.dbId];
+    addLog(`กำจัด ${targetInfo.name} สำเร็จ!`, 'log-exp');
+    gameState.character.exp += targetInfo.exp;
+    addLog(`ได้รับค่าประสบการณ์ ${targetInfo.exp} หน่วย`, 'log-exp');
+    
+    if (gameState.autoPickup && targetInfo.drops) {
+        for (const itemName in targetInfo.drops) {
+            if (Math.random() < targetInfo.drops[itemName]) {
+                if (itemName === 'เงิน') {
+                    const amount = 10 + Math.floor(Math.random() * targetInfo.level * 10);
+                    gameState.character.money += amount;
+                    addLog(`ได้รับ ${amount.toLocaleString()} สลึง`, 'log-item');
+                } else {
+                    addItemToInventory(itemName, 1);
+                    addLog(`ได้รับไอเทม: ${itemName}`, 'log-item');
+                    updateQuestProgress(itemName);
+                }
+            }
+        }
+    }
+    
+    checkLevelUp();
+    const defeatedId = target.id;
+    gameState.targetId = null;
+
+    setTimeout(() => {
+         const monsterIndex = gameState.environment.monsters.findIndex(m => m.id === defeatedId);
+         if(monsterIndex !== -1){
+             gameState.environment.monsters[monsterIndex].currentHp = targetInfo.hp;
+             addLog(`${targetInfo.name} เกิดใหม่แล้ว`, 'log-system');
+             updateUI();
+         }
+    }, 5000);
+}
+
+function addItemToInventory(name, quantity) {
+    const existingItem = gameState.character.inventory.find(item => item.name === name);
+    if (existingItem) { existingItem.quantity += quantity; } else { gameState.character.inventory.push({ name, quantity }); }
+}
+
+function checkLevelUp() {
+    if (gameState.character.exp >= gameState.character.maxExp) {
+        gameState.character.level++;
+        gameState.character.exp -= gameState.character.maxExp;
+        gameState.character.maxExp = Math.floor(gameState.character.maxExp * 1.5);
+        gameState.character.maxHp += 20;
+        gameState.character.maxMp += 10;
+        gameState.character.hp = gameState.character.maxHp;
+        gameState.character.mp = gameState.character.maxMp;
+        addLog(`เลเวลอัพ! คุณไปถึงเลเวล ${gameState.character.level} แล้ว!`, 'log-exp');
+    }
+}
+
+
+// --- UI UPDATE FUNCTION ---
+function updateUI() {
+    if (!gameState.loggedIn) {
+        // Clear UI on logout
+        return;
+    };
+    
+    const char = gameState.character;
+    const fields = {
+        'stat-lv-top': char.level, 'info-name': char.name, 'info-class': char.class, 'info-level': char.level,
+        'info-honor': char.honor.toLocaleString(), 'info-money': char.money.toLocaleString(),
+        'hp-text': `${char.hp}/${char.maxHp}`, 'mp-text': `${char.mp}/${char.maxMp}`,
+        'rage-text': `${char.rage}/${char.maxRage}`, 'exp-text': `${char.exp}/${char.maxExp}`,
+        'stat-atk': char.stats.atk, 'stat-acc': char.stats.acc, 'stat-def': char.stats.def,
+        'stat-eva': char.stats.eva, 'stat-chi': char.stats.chi, 'stat-skill-atk': char.stats.skill_atk,
+        'stat-skill-def': char.stats.skill_def, 'stat-hp': char.stats.hp_stat
+    };
+    for(const id in fields) { document.getElementById(id).textContent = fields[id]; }
+
+    const bars = {
+        'hp-bar-top': (char.hp / char.maxHp), 'mp-bar-top': (char.mp / char.maxMp), 'exp-bar-top': (char.exp / char.maxExp),
+        'hp-bar-main': (char.hp / char.maxHp), 'mp-bar-main': (char.mp / char.maxMp), 'exp-bar-main': (char.exp / char.maxExp),
+        'rage-bar-main': (char.rage / char.maxRage)
+    };
+    for(const id in bars) { document.getElementById(id).style.width = `${bars[id] * 100}%`; }
+    document.getElementById('hp-percent-top').textContent = `${Math.floor(bars['hp-bar-top']*100)}%`;
+    document.getElementById('mp-percent-top').textContent = `${Math.floor(bars['mp-bar-top']*100)}%`;
+    document.getElementById('exp-percent-top').textContent = `${Math.floor(bars['exp-bar-top']*100)}%`;
+
+    // Env Monsters
+    ui.envTbodyMonsters.innerHTML = gameState.environment.monsters.map(mob => {
+        const info = YULGANG_DB.monsters[mob.dbId];
+        const status = mob.currentHp > 0 ? `${mob.currentHp}/${info.hp}` : 'ตาย';
+        return `<tr class="${mob.id === gameState.targetId ? 'targeted' : ''}"><td>${mob.id}</td><td>${info.name}</td><td>${mob.dist}</td><td>${info.level}</td><td>${status}</td></tr>`;
+    }).join('');
+
+    // Env NPCs
+    ui.envTbodyNpcs.innerHTML = gameState.environment.npcs.map(npc => `<tr class="clickable" onclick="openNpcDialog(${npc.id})"><td>${npc.id}</td><td>${npc.name}</td><td>${npc.location}</td><td>${npc.dist}</td></tr>`).join('');
+
+    // Inventory
+    ui.itemsTbody.innerHTML = char.inventory.map(item => `<tr><td>${item.name}</td><td>${item.quantity.toLocaleString()}</td></tr>`).join('');
+    
+    // Quests
+    ui.questsList.innerHTML = char.activeQuests.map(q => {
+        let progressHtml = q.objectives.map(obj => {
+            if (obj.type === 'collect') {
+                return `<li>${obj.itemName}: ${q.progress[obj.itemName]} / ${obj.amount}</li>`;
+            }
+            return '';
+        }).join('');
+        return `<div class="group-box" style="font-size:10px;"><div class="group-box-title">${q.title}</div><ul>${progressHtml}</ul></div>`;
+    }).join('');
+}
+
+
+// --- INITIALIZATION ---
+window.onload = () => {
+    document.getElementById('auto-hunt-check').addEventListener('change', (e) => { gameState.autoHunt = e.target.checked; addLog(`ระบบล่าอัตโนมัติ ${gameState.autoHunt ? 'เปิด' : 'ปิด'}`, 'log-system'); });
+    document.getElementById('auto-pot-check').addEventListener('change', (e) => { gameState.autoPotion = e.target.checked; addLog(`ระบบยาอัตโนมัติ ${gameState.autoPotion ? 'เปิด' : 'ปิด'}`, 'log-system'); });
+    document.getElementById('auto-pickup-check').addEventListener('change', (e) => { gameState.autoPickup = e.target.checked; addLog(`ระบบเก็บของอัตโนมัติ ${gameState.autoPickup ? 'เปิด' : 'ปิด'}`, 'log-system'); });
+    gameInterval = setInterval(gameLoop, 2000);
+};
+
+</script>
+</body>
 </html>
