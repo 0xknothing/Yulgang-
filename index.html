@@ -1,69 +1,89 @@
-<!DOCTYPE html>
-<html lang="th">
+<!DOCTYPE html><html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YulgangWorld - (Full Simulation)</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #121212;
-      color: white;
-      padding: 20px;
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-    }
-    section {
-      background: #1e1e1e;
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid #333;
-      margin-bottom: 15px;
-    }
-    h1, h2 {
-      color: #e0e0e0;
-      border-bottom: 2px solid #ff6b6b;
-      padding-bottom: 5px;
-    }
-    button, select, input {
-      background: #333;
-      color: white;
-      border: 1px solid #555;
-      padding: 8px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover:not(:disabled) {
-      background: #ff6b6b;
-    }
-    button:disabled {
-      background: #2a2a2a;
-      color: #666;
-      cursor: not-allowed;
-    }
-    .item-slot { margin: 5px 0; }
-    .game-container {
-        display: flex;
-        gap: 20px;
-    }
-    .main-column, .side-column {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    /* Combat & Monster Styles */
-    #monster-area {
-        position: relative; /* For damage text positioning */
-        border: 1px solid #888;
-        padding: 10px;
-        margin-top: 10px;
-        text-align: center;
-    }
-    .monster-hp-bar {
-        width: 100%;
-        background: #555;
+  <title>YG Light Web3 Simulation</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="wallet.js" defer></script>
+  <script src="game.js" defer></script>
+  <script src="map.js" defer></script>
+  <script src="nft.js" defer></script>
+  <script src="log.js" defer></script>
+</head>
+<body>
+  <div id="top-panel">
+    <label>เซิร์ฟเวอร์:</label>
+    <select id="server-select">
+      <option>ดินแดนสงคราม</option>
+    </select>
+    <label>ช่อง:</label>
+    <select id="channel-select">
+      <option>1</option>
+    </select>
+    <label>ชื่อตัวละคร:</label>
+    <input type="text" id="character-name" value="เทพกาว">
+    <label>รหัสผ่าน:</label>
+    <input type="password" id="password" value="yglight123">
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <button onclick="loginGame()">Login</button>
+    <div>
+      HP: <progress id="hp-bar" value="100" max="100"></progress>
+      MP: <progress id="mp-bar" value="100" max="100"></progress>
+      EXP: <progress id="exp-bar" value="6" max="100"></progress>
+    </div>
+  </div>  <div id="main-container">
+    <div id="left-panel">
+      <div id="map-container">
+        <canvas id="game-map" width="300" height="300"></canvas>
+        <div>
+          <label>Zoom:</label>
+          <input type="range" id="zoom" min="1" max="10" value="5">
+        </div>
+        <div>
+          <label><input type="checkbox" checked> Monster</label>
+          <label><input type="checkbox"> NPC</label>
+          <label><input type="checkbox"> Shop</label>
+          <label><input type="checkbox"> Player</label>
+        </div>
+      </div><div id="log-console">
+    <h3>ข้อความ</h3>
+    <textarea id="log-box" rows="10" readonly></textarea>
+  </div>
+</div>
+
+<div id="right-panel">
+  <div id="info-panel">
+    <h3>Information</h3>
+    <p>ชื่อ: <span id="char-name">เทพกาว</span></p>
+    <p>เลเวล: <span id="char-lv">10</span></p>
+    <p>พลังชีวิต: <span id="char-hp">214</span></p>
+    <p>พลังเวท: <span id="char-mp">150</span></p>
+    <p>ความโกรธ: <span id="char-rage">1000</span></p>
+    <p>ประสบการณ์: <span id="char-exp">633 / 938</span></p>
+    <h4>อุปกรณ์สวมใส่</h4>
+    <ul id="equipped-items">
+      <li>หลีอเวจี</li>
+      <li>วิญญาณมาร</li>
+      <li>คาถาคริติคอล</li>
+    </ul>
+  </div>
+
+  <div id="env-table">
+    <h3>Environment</h3>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>ชื่อ</th><th>LV</th><th>อาชีพ</th></tr>
+      </thead>
+      <tbody id="env-entities">
+        <tr><td>860</td><td>ตายโคตรเก่ง</td><td>14</td><td>ดาบเทพ</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+  </div>
+</body>
+</html>        background: #555;
         border-radius: 5px;
         overflow: hidden;
         height: 20px;
