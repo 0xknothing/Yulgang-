@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ygLight Bot - Yulgang Simulation v5</title>
+    <title>ygLight Bot - Yulgang Simulation v6</title>
     <style>
         /* --- Core Styles & Fonts --- */
         @import url('https://fonts.googleapis.com/css2?family=Tahoma:wght@400;700&display=swap');
@@ -36,12 +36,12 @@
 
         /* --- Login Screen --- */
         #login-screen { width: 100%; height: 100%; display: flex; }
-        .login-box { margin: 50px auto; width: 250px; padding: 20px; }
+        .login-box { margin: 50px auto; width: 280px; padding: 20px; }
         .login-box img { display: block; margin: 10px auto; }
         .login-box .form-row { display: flex; align-items: center; margin-bottom: 8px; }
-        .login-box label { width: 60px; }
-        .login-box input { flex-grow: 1; }
-        .login-box button { display: block; width: 100px; margin: 15px auto 0 auto; }
+        .login-box label { width: 80px; }
+        .login-box input, .login-box select { flex-grow: 1; }
+        .login-box .button-group { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
         
         /* --- Main App UI Elements --- */
         .top-bar { padding: 3px; display: grid; grid-template-columns: 1fr 1fr; grid-gap: 5px; border-bottom: 1px solid #c0c0c0; }
@@ -63,7 +63,7 @@
         .progress-bar { height: 12px; background: #c0c0c0; border: 1px inset var(--border-in-top-left); position: relative; flex-grow: 1; }
         .progress-fill { height: 100%; position: absolute; left:0; top:0; }
         .hp-fill { background: #FF0000; } .mp-fill { background: #0000FF; } .exp-fill { background: #ffa500; } .rage-fill { background: #8b0000; }
-        .buff-bar { display: flex; gap: 4px; margin-top: 5px; padding: 2px 5px;}
+        .buff-bar { display: flex; gap: 4px; margin-top: 5px; padding: 2px 5px; min-height: 26px;}
         .buff-icon { width: 20px; height: 20px; background-color: #ccc; border: 1px solid #888; font-size: 14px; text-align: center; line-height: 18px; position: relative; }
         .buff-icon .tooltip { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; border-radius: 6px; padding: 5px 0; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s; }
         .buff-icon:hover .tooltip { visibility: visible; opacity: 1; }
@@ -97,8 +97,17 @@
     <div class="title-bar"><div class="title-bar-icon"></div><span class="title-bar-text">ygLight Bot</span><div class="window-controls"><button>0</button><button>1</button><button>r</button></div></div>
     
     <div id="login-screen" class="content-area">
-        <div class="login-left"><div class="group-box login-box"><div class="group-box-title">ระบบตรวจสอบสมาชิก</div><div class="form-row"><label for="username">ชื่อสมาชิก:</label><input type="text" id="username" value="my_account"></div><div class="form-row"><label for="password">รหัสผ่าน:</label><input type="password" id="password" value="123456"></div><img src="https://i.imgur.com/G5T51Ep.png" alt="login avatar"><button onclick="login()">Login</button></div></div>
-        <div class="login-right panel"><div class="tab-bar"><div class="tab-button active">สถานะ</div></div><div class="tab-content active" style="padding: 10px;">ยังไม่ได้เชื่อมต่อกับเซิร์ฟเวอร์...</div></div>
+        <div class="login-left"><div class="group-box login-box"><div class="group-box-title">ระบบสมาชิก</div>
+            <div class="form-row"><label for="account-select">เลือกบัญชี:</label><select id="account-select"></select></div>
+            <div class="form-row"><label for="login-username">ชื่อผู้ใช้:</label><input type="text" id="login-username"></div>
+            <div class="form-row"><label for="login-password">รหัสผ่าน:</label><input type="password" id="login-password"></div>
+            <img src="https://i.imgur.com/G5T51Ep.png" alt="login avatar">
+            <div class="button-group">
+                <button onclick="handleLogin()">Login</button>
+                <button onclick="showRegisterDialog()">สมัครบัญชีใหม่</button>
+            </div>
+        </div></div>
+        <div class="login-right panel"><div class="tab-bar"><div class="tab-button active">สถานะ</div></div><div id="login-status" class="tab-content active" style="padding: 10px;">กรุณาเลือกบัญชีเพื่อเข้าสู่ระบบ...</div></div>
     </div>
 
     <div id="app-screen" class="content-area">
@@ -106,7 +115,7 @@
             <div class="panel">
                 <div class="top-bar">
                     <div><div class="top-bar-section"><label for="server">เซิร์ฟเวอร์:</label><select id="server"><option>พิชิตสุริยัน</option></select></div><div class="top-bar-section"><label for="char-name">ชื่อ:</label><input type="text" id="char-name" value="มือใหม่หัดบอท" readonly></div></div>
-                    <div><div class="top-bar-section"><label for="char-select">ตัวละคร:</label><select id="char-select"><option>1</option></select><label for="pass">รหัสผ่าน:</label><input type="password" id="pass" value="********" readonly></div><div class="top-bar-section"><button id="loginBtn" onclick="toggleLogin()">Login</button><button id="logoutBtn" style="display:none;" onclick="toggleLogin()">Logout</button></div></div>
+                    <div><div class="top-bar-section"><label for="char-select">ตัวละคร:</label><select id="char-select"><option>1</option></select><label for="pass">รหัสผ่าน:</label><input type="password" id="pass" value="********" readonly></div><div class="top-bar-section"><button id="logoutBtn" onclick="handleLogout()">Logout</button></div></div>
                 </div>
                 <div class="top-bar-stats panel-inset">LV: <span id="stat-lv-top" style="margin-right:10px;">0</span> พลังชีวิต: <div class="progress-bar" style="width: 80px;"><div id="hp-bar-top" class="progress-fill hp-fill"></div></div><span id="hp-percent-top">0%</span> พลังปราณ: <div class="progress-bar" style="width: 80px;"><div id="mp-bar-top" class="progress-fill mp-fill"></div></div><span id="mp-percent-top">0%</span> ประสบการณ์: <div class="progress-bar" style="width: 80px;"><div id="exp-bar-top" class="progress-fill exp-fill"></div></div><span id="exp-percent-top">0%</span></div>
                 <div class="buff-bar panel-inset" id="buff-bar-main"></div>
@@ -147,6 +156,17 @@
     </div>
 </div>
 
+<div id="register-dialog-overlay" class="overlay">
+    <div class="dialog-window">
+        <div class="dialog-title-bar">สมัครบัญชีใหม่</div>
+        <div class="dialog-content"><div class="group-box"><div class="group-box-title">สร้างบัญชี</div><div class="form-row"><label for="reg-username">ชื่อผู้ใช้:</label><input type="text" id="reg-username"></div><div class="form-row"><label for="reg-password">รหัสผ่าน:</label><input type="password" id="reg-password"></div></div></div>
+        <div class="dialog-buttons">
+            <button onclick="handleRegister()">[ยืนยัน]</button>
+            <button onclick="closeRegisterDialog()">[ยกเลิก]</button>
+        </div>
+    </div>
+</div>
+
 <div id="npc-dialog-overlay" class="overlay">
     <div class="dialog-window">
         <div class="dialog-title-bar" id="dialog-title"></div>
@@ -167,6 +187,10 @@
 
 
 <script>
+// --- CONSTANTS ---
+const ACCOUNTS_STORAGE_KEY = 'ygLightBotAccounts';
+const MAX_ACCOUNTS = 5;
+
 // --- YULGANG DATABASE (BASED ON PC TH) ---
 const YULGANG_DB = {
     monsters: {
@@ -198,7 +222,7 @@ const YULGANG_DB = {
     }
 };
 
-const CHARACTER_DATA = {
+const CHARACTER_TEMPLATE = {
     name: "มือใหม่หัดบอท", class: "นักดาบ", level: 1, honor: 0, money: 1000,
     x: 160, y: 190, // Start near town
     hp: 100, maxHp: 100, mp: 50, maxMp: 50, rage: 0, maxRage: 1000, exp: 0, maxExp: 100,
@@ -216,37 +240,95 @@ const ui = {
     loginScreen: document.getElementById('login-screen'), appScreen: document.getElementById('app-screen'), logArea: document.getElementById('logArea'),
     envTbodyMonsters: document.getElementById('env-tbody-monsters'), envTbodyNpcs: document.getElementById('env-tbody-npcs'),
     itemsTbody: document.querySelector('#items-table tbody'), skillsTbody: document.querySelector('#skills-table tbody'),
-    questsList: document.getElementById('quests-list'), loginBtn: document.getElementById('loginBtn'), logoutBtn: document.getElementById('logoutBtn'),
+    questsList: document.getElementById('quests-list'), loginStatus: document.getElementById('login-status'),
     dialogOverlay: document.getElementById('npc-dialog-overlay'), dialogTitle: document.getElementById('dialog-title'),
     dialogText: document.getElementById('dialog-text'), dialogButtons: document.getElementById('dialog-buttons-container'),
     shopOverlay: document.getElementById('shop-window'), shopTitle: document.getElementById('shop-title'),
     shopItemsContainer: document.getElementById('shop-items-container'), playerDot: document.getElementById('player-dot'),
     buffBar: document.getElementById('buff-bar-main'),
+    registerDialog: document.getElementById('register-dialog-overlay'),
+    accountSelect: document.getElementById('account-select')
 };
 
-// --- UI LOGIC ---
-function login() {
-    ui.loginScreen.style.display = 'none';
-    ui.appScreen.style.display = 'flex';
-    addLog("กำลังเชื่อมต่อเซิร์ฟเวอร์ พิชิตสุริยัน...", "log-info");
-    setTimeout(() => { addLog("ตรวจสอบ ID และรหัสผ่าน...", "log-info"); setTimeout(toggleLogin, 1000); }, 500);
+// --- ACCOUNT MANAGEMENT ---
+function getAccounts() { return JSON.parse(localStorage.getItem(ACCOUNTS_STORAGE_KEY)) || {}; }
+function saveAccounts(accounts) { localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts)); }
+
+function showRegisterDialog() { ui.registerDialog.style.display = 'flex'; }
+function closeRegisterDialog() { ui.registerDialog.style.display = 'none'; }
+
+function handleRegister() {
+    const username = document.getElementById('reg-username').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const accounts = getAccounts();
+
+    if (!username || !password) { alert("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน"); return; }
+    if (accounts[username]) { alert("ชื่อผู้ใช้นี้มีอยู่แล้ว"); return; }
+    if (Object.keys(accounts).length >= MAX_ACCOUNTS) { alert(`ไม่สามารถสร้างบัญชีได้เกิน ${MAX_ACCOUNTS} บัญชี`); return; }
+
+    const newCharacterData = JSON.parse(JSON.stringify(CHARACTER_TEMPLATE));
+    newCharacterData.name = username; // Use username as character name for simplicity
+    
+    accounts[username] = { password: password, characterData: newCharacterData };
+    saveAccounts(accounts);
+    
+    alert(`สร้างบัญชี '${username}' สำเร็จ!`);
+    closeRegisterDialog();
+    populateAccountList();
 }
 
-function toggleLogin() {
-    gameState.loggedIn = !gameState.loggedIn;
-    if (gameState.loggedIn) {
-        ui.loginBtn.style.display = 'none'; ui.logoutBtn.style.display = 'inline-block';
-        addLog(`[SYSTEM] LOGIN_SERVER_00`, 'log-system');
-        addLog(`[SYSTEM] พบตัวละครที่จุดเซฟ`, 'log-system');
-        initializeGame();
+function handleLogin() {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    const accounts = getAccounts();
+    const account = accounts[username];
+
+    if (account && account.password === password) {
+        ui.loginScreen.style.display = 'none';
+        ui.appScreen.style.display = 'flex';
+        initializeGame(username, account.characterData);
     } else {
-        ui.loginBtn.style.display = 'inline-block'; ui.logoutBtn.style.display = 'none';
-        addLog("ออกจากระบบเรียบร้อย", "log-error");
-        resetGame();
+        alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     }
-    updateUI();
 }
 
+function handleLogout() {
+    if (!gameState.loggedIn) return;
+    saveCurrentCharacterData();
+    gameState.loggedIn = false;
+    clearInterval(gameInterval);
+    clearInterval(buffInterval);
+    
+    ui.appScreen.style.display = 'none';
+    ui.loginScreen.style.display = 'flex';
+    ui.loginStatus.textContent = 'ออกจากระบบสำเร็จ กรุณาเลือกบัญชีเพื่อเข้าสู่ระบบ';
+}
+
+function saveCurrentCharacterData() {
+    if (!gameState.loggedIn) return;
+    const accounts = getAccounts();
+    const username = gameState.character.name;
+    if (accounts[username]) {
+        accounts[username].characterData = gameState.character;
+        saveAccounts(accounts);
+        addLog(`[SYSTEM] บันทึกข้อมูลตัวละคร ${username} เรียบร้อย`, 'log-system');
+    }
+}
+
+function populateAccountList() {
+    const accounts = getAccounts();
+    const usernames = Object.keys(accounts);
+    ui.accountSelect.innerHTML = '<option value="">-- เลือกบัญชี --</option>';
+    usernames.forEach(username => {
+        const option = document.createElement('option');
+        option.value = username;
+        option.textContent = username;
+        ui.accountSelect.appendChild(option);
+    });
+    ui.loginStatus.textContent = `พบ ${usernames.length} บัญชี. กรุณาเลือกบัญชีเพื่อเข้าสู่ระบบ`;
+}
+
+// --- UI LOGIC ---
 function showInfoTab(event, tabName) {
     document.querySelectorAll('.info-tabs .tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.info-tabs .tab-button').forEach(el => el.classList.remove('active'));
@@ -262,6 +344,7 @@ function showEnvTab(event, tabName) {
 }
 
 function addLog(message, className) {
+    if (!ui.logArea) return;
     const timestamp = new Date().toLocaleTimeString('th-TH', { hour12: false });
     const logEntry = document.createElement('div');
     logEntry.className = className;
@@ -374,10 +457,10 @@ function checkQuestCompletion(quest) {
 }
 
 // --- GAME LOGIC ---
-function initializeGame() {
+function initializeGame(username, characterData) {
     gameState = {
         loggedIn: true, autoHunt: false, autoPotion: false, autoPickup: false, autoBuff: false, targetId: null, isMoving: false,
-        character: JSON.parse(JSON.stringify(CHARACTER_DATA)),
+        character: JSON.parse(JSON.stringify(characterData)), // Load specific character data
         environment: { monsters: [], npcs: [] }
     };
     let monsterIdCounter = 1;
@@ -391,31 +474,44 @@ function initializeGame() {
     }
     gameState.environment.npcs = Object.values(YULGANG_DB.npcs);
     Object.values(YULGANG_DB.quests).forEach(q => q.status = 'available');
-    addLog(`ยินดีต้อนรับ, ${gameState.character.name}!`, 'log-exp');
+    
+    // Sync quest status with loaded character data
+    gameState.character.activeQuests.forEach(activeQuest => {
+        if (YULGANG_DB.quests[activeQuest.id]) {
+            YULGANG_DB.quests[activeQuest.id].status = 'active';
+            checkQuestCompletion(activeQuest); // Re-check status in case it was completed before logout
+        }
+    });
+
+    addLog(`ยินดีต้อนรับ, ${username}!`, 'log-exp');
+    document.getElementById('char-name').value = username;
+    
+    // Reset control checkboxes
+    ['auto-hunt-check', 'auto-pot-check', 'auto-pickup-check', 'auto-buff-check'].forEach(id => document.getElementById(id).checked = false);
+
+    gameInterval = setInterval(gameLoop, 2000);
+    buffInterval = setInterval(() => { if(gameState.loggedIn) handleBuffs() }, 1000);
     updateUI();
 }
 
-function resetGame() { gameState = {}; updateUI(); }
-
-function gameLoop() {
-    if (!gameState.loggedIn) return;
-    handleAutoBuffs();
-    if (!gameState.autoHunt || gameState.isMoving) return;
-
-    if (gameState.targetId === null) { findNewTarget(); }
-    
-    const target = gameState.environment.monsters.find(m => m.id === gameState.targetId);
-    if (!target || target.currentHp <= 0) { gameState.targetId = null; return; }
-    
-    const dist = Math.hypot(target.x - gameState.character.x, target.y - gameState.character.y);
-    if (dist > 50) { // Attack range
-        moveTo(target.x, target.y);
-    } else {
-        attackTarget(target);
-    }
+function resetGame() { 
+    gameState = {}; 
+    clearInterval(gameInterval);
+    clearInterval(buffInterval);
+    updateUI(); 
 }
 
-function handleAutoBuffs() {
+function gameLoop() {
+    if (!gameState.loggedIn || !gameState.autoHunt || gameState.isMoving) return;
+    if (gameState.targetId === null) { findNewTarget(); }
+    const target = gameState.environment.monsters.find(m => m.id === gameState.targetId);
+    if (!target || target.currentHp <= 0) { gameState.targetId = null; return; }
+    const dist = Math.hypot(target.x - gameState.character.x, target.y - gameState.character.y);
+    if (dist > 50) { moveTo(target.x, target.y); } 
+    else { attackTarget(target); }
+}
+
+function handleBuffs() {
     if(gameState.autoBuff) {
         const buffSkill = gameState.character.skills.find(s => s.type === 'buff');
         if (buffSkill && !gameState.character.buffs.some(b => b.id === buffSkill.id)) {
@@ -426,7 +522,6 @@ function handleAutoBuffs() {
             }
         }
     }
-    // Tick down buffs
     gameState.character.buffs.forEach((buff, index) => {
         buff.timeLeft--;
         if (buff.timeLeft <= 0) {
@@ -450,7 +545,6 @@ function findNewTarget() {
 function moveTo(x, y) {
     gameState.isMoving = true;
     addLog(`กำลังเคลื่อนที่ไปยัง [${x}, ${y}]...`, 'log-info');
-    // Simulate movement
     setTimeout(() => {
         gameState.character.x = x + (Math.random() * 20 - 10);
         gameState.character.y = y + (Math.random() * 20 - 10);
@@ -479,7 +573,7 @@ function attackTarget(target) {
     if (target.currentHp <= 0) { handleMonsterDefeat(target); } 
     else {
         setTimeout(() => {
-             if(target.currentHp <= 0) return; // check if target died in the meantime
+             if(target.currentHp <= 0) return;
              const monsterDamage = Math.max(1, Math.floor(targetInfo.atk - (gameState.character.stats.def/2)));
              gameState.character.hp = Math.max(0, gameState.character.hp - monsterDamage);
              addLog(`${targetInfo.name} โจมตีกลับ, ได้รับความเสียหาย ${monsterDamage} หน่วย`, 'log-error');
@@ -563,7 +657,7 @@ function updateUI() {
     if (!gameState.loggedIn) { return; };
     const char = gameState.character;
     const fields = {
-        'stat-lv-top': char.level, 'info-name': char.name, 'info-class': char.class, 'info-level': char.level, 'info-coords': `${Math.floor(char.x)}, ${Math.floor(char.y)}`, 'info-money': char.money.toLocaleString(),
+        'info-name': char.name, 'info-class': char.class, 'info-level': char.level, 'info-coords': `${Math.floor(char.x)}, ${Math.floor(char.y)}`, 'info-money': char.money.toLocaleString(),
         'hp-text': `${char.hp}/${char.maxHp}`, 'mp-text': `${char.mp}/${char.maxMp}`, 'rage-text': `${char.rage}/${char.maxRage}`, 'exp-text': `${char.exp}/${char.maxExp}`,
         'stat-atk': char.stats.atk, 'stat-acc': char.stats.acc, 'stat-def': char.stats.def, 'stat-eva': char.stats.eva, 'stat-chi': char.stats.chi, 'stat-skill-atk': char.stats.skill_atk, 'stat-skill-def': char.stats.skill_def, 'stat-hp': char.stats.hp_stat
     };
@@ -574,6 +668,8 @@ function updateUI() {
     document.getElementById('hp-percent-top').textContent = `${Math.floor(bars['hp-bar-top']*100)}%`;
     document.getElementById('mp-percent-top').textContent = `${Math.floor(bars['mp-bar-top']*100)}%`;
     document.getElementById('exp-percent-top').textContent = `${Math.floor(bars['exp-bar-top']*100)}%`;
+    document.getElementById('stat-lv-top').textContent = char.level;
+
 
     ui.envTbodyMonsters.innerHTML = gameState.environment.monsters.map(mob => { const info = YULGANG_DB.monsters[mob.dbId]; const status = mob.currentHp > 0 ? `${mob.currentHp}/${info.hp}` : 'ตาย'; return `<tr class="${mob.id === gameState.targetId ? 'targeted' : ''}"><td>${mob.id}</td><td>${info.name}</td><td>${mob.x},${mob.y}</td><td>${info.level}</td><td>${status}</td></tr>`; }).join('');
     ui.envTbodyNpcs.innerHTML = gameState.environment.npcs.map(npc => `<tr class="clickable" onclick="openNpcDialog(${npc.id})"><td>${npc.id}</td><td>${npc.name}</td><td>${npc.location}</td><td>${npc.x},${npc.y}</td></tr>`).join('');
@@ -589,13 +685,15 @@ function updateUI() {
 
 // --- INITIALIZATION ---
 window.onload = () => {
-    document.getElementById('auto-hunt-check').addEventListener('change', (e) => { gameState.autoHunt = e.target.checked; addLog(`ระบบล่าอัตโนมัติ ${gameState.autoHunt ? 'เปิด' : 'ปิด'}`, 'log-system'); });
-    document.getElementById('auto-pot-check').addEventListener('change', (e) => { gameState.autoPotion = e.target.checked; addLog(`ระบบยาอัตโนมัติ ${gameState.autoPotion ? 'เปิด' : 'ปิด'}`, 'log-system'); });
-    document.getElementById('auto-pickup-check').addEventListener('change', (e) => { gameState.autoPickup = e.target.checked; addLog(`ระบบเก็บของอัตโนมัติ ${gameState.autoPickup ? 'เปิด' : 'ปิด'}`, 'log-system'); });
-    document.getElementById('auto-buff-check').addEventListener('change', (e) => { gameState.autoBuff = e.target.checked; addLog(`ระบบบัพอัตโนมัติ ${gameState.autoBuff ? 'เปิด' : 'ปิด'}`, 'log-system'); });
-    
-    gameInterval = setInterval(gameLoop, 2000);
-    buffInterval = setInterval(() => { if(gameState.loggedIn) handleAutoBuffs() }, 1000);
+    populateAccountList();
+    ui.accountSelect.addEventListener('change', (e) => {
+        document.getElementById('login-username').value = e.target.value;
+    });
+
+    document.getElementById('auto-hunt-check').addEventListener('change', (e) => { if(gameState.loggedIn) gameState.autoHunt = e.target.checked; addLog(`ระบบล่าอัตโนมัติ ${e.target.checked ? 'เปิด' : 'ปิด'}`, 'log-system'); });
+    document.getElementById('auto-pot-check').addEventListener('change', (e) => { if(gameState.loggedIn) gameState.autoPotion = e.target.checked; addLog(`ระบบยาอัตโนมัติ ${e.target.checked ? 'เปิด' : 'ปิด'}`, 'log-system'); });
+    document.getElementById('auto-pickup-check').addEventListener('change', (e) => { if(gameState.loggedIn) gameState.autoPickup = e.target.checked; addLog(`ระบบเก็บของอัตโนมัติ ${e.target.checked ? 'เปิด' : 'ปิด'}`, 'log-system'); });
+    document.getElementById('auto-buff-check').addEventListener('change', (e) => { if(gameState.loggedIn) gameState.autoBuff = e.target.checked; addLog(`ระบบบัพอัตโนมัติ ${e.target.checked ? 'เปิด' : 'ปิด'}`, 'log-system'); });
 };
 </script>
 </body>
