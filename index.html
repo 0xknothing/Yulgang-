@@ -1,9 +1,97 @@
+
 <!DOCTYPE html><html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YG Light Web3 Simulation</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      font-size: 14px;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+    }#top-panel {
+  background: linear-gradient(to right, #d8e4f0, #c1d6ec);
+  padding: 10px;
+  border-bottom: 2px solid #888;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+#main-container {
+  display: flex;
+  flex-direction: row;
+  padding: 10px;
+  gap: 10px;
+}
+
+#left-panel, #right-panel {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  height: 85vh;
+  overflow-y: auto;
+}
+
+#map-container {
+  border: 1px solid #aaa;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+
+#game-map {
+  width: 100%;
+  border: 1px solid #333;
+  background-color: #eef;
+}
+
+#info-panel p, #info-panel h4, #info-panel ul {
+  margin: 4px 0;
+}
+
+#info-panel ul {
+  padding-left: 16px;
+}
+
+#env-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+#env-table th, #env-table td {
+  border: 1px solid #999;
+  padding: 4px;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+#log-console textarea {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: #ffffe0;
+  font-family: monospace;
+  resize: none;
+}
+
+progress {
+  width: 100px;
+  height: 14px;
+}
+
+h3 {
+  margin-top: 0;
+  background-color: #005b96;
+  color: white;
+  padding: 4px;
+  font-size: 16px;
+}
+
+  </style>
   <script src="wallet.js" defer></script>
   <script src="game.js" defer></script>
   <script src="map.js" defer></script>
@@ -82,670 +170,5 @@
 </div>
 
   </div>
-</body>
-</html>        background: #555;
-        border-radius: 5px;
-        overflow: hidden;
-        height: 20px;
-    }
-    .monster-hp-fill {
-        background: #c0392b;
-        height: 100%;
-        transition: width 0.3s;
-    }
-    .damage-popup {
-        position: absolute;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 1.5em;
-        font-weight: bold;
-        animation: floatUp 1s forwards;
-        pointer-events: none;
-    }
-    .damage-player { color: #e74c3c; }
-    .damage-monster { color: #f1c40f; }
-    .damage-crit { color: #ff6b6b; font-size: 2em; }
-
-    @keyframes floatUp {
-      from { top: 50px; opacity: 1; }
-      to { top: -20px; opacity: 0; }
-    }
-    
-    #combat-log {
-        height: 100px;
-        overflow-y: auto;
-        background: #000;
-        padding: 5px;
-        border-radius: 4px;
-        margin-top: 10px;
-        font-size: 0.9em;
-    }
-    .log-player { color: #3498db; }
-    .log-monster { color: #e74c3c; }
-    .log-system { color: #2ecc71; }
-
-    /* Modal Styles */
-    #game-over-modal {
-        display: none;
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8);
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        text-align: center;
-    }
-  </style>
-</head>
-<body>
-
-  <div id="character-creation">
-    <section>
-      <h1>YulgangWorld Simulation</h1>
-      <h2>สร้างตัวละคร</h2>
-      <form id="create-character-form">
-        <input id="char-name" placeholder="ชื่อตัวละคร" required><br><br>
-        <select id="char-gender"><option>ชาย</option><option>หญิง</option></select><br><br>
-        <select id="char-class">
-          <option value="swordsman">Swordsman</option>
-          <option value="archer">Archer</option>
-          <option value="mage">Mage</option>
-          <option value="assassin">Assassin</option>
-          <option value="spearman">Spearman</option>
-        </select><br><br>
-        <button type="submit">เริ่มการผจญภัย</button>
-      </form>
-    </section>
-  </div>
-
-  <div id="game-world" style="display:none;" class="game-container">
-    <div class="main-column">
-      <section id="character-status">
-        <h2>สถานะตัวละคร</h2>
-        <p>ชื่อ: <span id="info-name"></span> | อาชีพ: <span id="info-class"></span></p>
-        <p>LV: <span id="info-lv"></span> | EXP: <span id="info-exp"></span> / <span id="info-exp-req"></span></p>
-        <p>HP: <span id="info-hp"></span> / <span id="info-max-hp"></span></p>
-        <p>MP: <span id="info-mp"></span> / <span id="info-max-mp"></span></p>
-        <p>ATK: <span id="info-atk"></span> | DEF: <span id="info-def"></span> | CRIT: <span id="info-crit"></span>%</p>
-        <p>PEN: <span id="info-pen"></span>% | SPD: <span id="info-spd"></span></p>
-        <button onclick="saveGame()">💾 บันทึกเกม</button>
-      </section>
-
-      <section id="combat">
-        <h2>โซนต่อสู้</h2>
-        <div>
-            เลือกมอนสเตอร์:
-            <select id="monster-select" onchange="selectMonster(this.value)"></select>
-        </div>
-        <div id="monster-area">
-          <h3 id="monster-name"></h3>
-          <p>HP: <span id="monster-hp"></span> / <span id="monster-max-hp"></span></p>
-          <div class="monster-hp-bar"><div id="monster-hp-fill" class="monster-hp-fill"></div></div>
-        </div>
-        <div style="margin-top: 10px; display: flex; gap: 10px;">
-          <button id="attack-btn" onclick="playerAttack()">โจมตี</button>
-          <button id="skill-btn" onclick="useSkill('Twin Strike')">ใช้สกิล (5s)</button>
-          <button id="potion-btn" onclick="useItem('HP Potion')">ยา HP (<span id="potion-count">0</span>)</button>
-        </div>
-        <div id="combat-log"></div>
-      </section>
-        
-      <section id="web3-sim">
-        <h2>Web3 Simulation</h2>
-        <p>YG Token: <span id="yg-token">0</span> | GOLD: <span id="gold-token">0</span></p>
-        <button onclick="mintNFT()">Mint NFT Weapon (1000 Gold)</button>
-        <button onclick="stakeToken()">Stake 50 YG</button>
-      </section>
-    </div>
-
-    <div class="side-column">
-      <section id="inventory">
-        <h2>กระเป๋า / อุปกรณ์</h2>
-        <div id="item-slots"></div>
-        <h3>อุปกรณ์ที่สวมใส่</h3>
-        <p>Weapon: <span id="equip-weapon">-</span></p>
-        <p>Armor: <span id="equip-armor">-</span></p>
-      </section>
-      
-      <section id="quest">
-        <h2>เควส</h2>
-        <ul id="quest-list"></ul>
-      </section>
-
-      <section id="daily-event">
-        <h2>Daily Reward</h2>
-        <button id="daily-reward-btn" onclick="claimDailyReward()">รับรางวัลวันนี้</button>
-        <p id="countdown"></p>
-      </section>
-    </div>
-  </div>
-
-  <div id="game-over-modal">
-    <div>
-        <h1>GAME OVER</h1>
-        <p>คุณถูกกำจัด...</p>
-        <button onclick="location.reload()">เริ่มต้นใหม่</button>
-    </div>
-  </div>
-
-<script>
-// =================================================================
-// ✅ GAME STATE & CORE VARIABLES
-// =================================================================
-let player = null;
-let currentTarget = null;
-let gameLoopInterval = null;
-
-const monsters = {
-    "snake": { name: "Tiger Snake", lv: 1, hp: 50, atk: 8, def: 2, dropEXP: 20, dropGOLD: 10, dropItems: [{ id: 'hp_potion', chance: 0.3 }] },
-    "boar": { name: "Wild Boar", lv: 5, hp: 150, atk: 15, def: 8, dropEXP: 50, dropGOLD: 30, dropItems: [{ id: 'hp_potion', chance: 0.5 }] },
-    "wolf": { name: "Shadow Wolf", lv: 10, hp: 300, atk: 30, def: 15, dropEXP: 120, dropGOLD: 70, dropItems: [{ id: 'hp_potion', chance: 0.7 }] }
-};
-
-const items = {
-    "hp_potion": { id: "hp_potion", name: "HP Potion", type: "consumable", effect: (p) => { p.hp = Math.min(p.maxHp, p.hp + 50); } }
-};
-
-const skillCooldowns = {
-    'Twin Strike': { duration: 5000, lastUsed: 0 }
-};
-
-// =================================================================
-// ✅ INITIALIZATION & GAME LIFECYCLE
-// =================================================================
-window.onload = function() {
-    loadGame();
-    populateMonsterSelect();
-};
-
-document.getElementById("create-character-form").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const name = document.getElementById("char-name").value;
-    const gender = document.getElementById("char-gender").value;
-    const job = document.getElementById("char-class").value;
-
-    player = {
-        name, gender, job, lv: 1, exp: 0,
-        hp: 100, maxHp: 100, mp: 50, maxMp: 50,
-        baseStats: { atk: 10, def: 5, spd: 5, crit: 5, pen: 0 },
-        equipment: { weapon: null, armor: null },
-        inventory: [{...items['hp_potion'], quantity: 5}], // Start with 5 potions
-        quests: {
-            main_1: { title: "กำจัด Tiger Snake", targetId: "snake", current: 0, required: 5, rewardEXP: 100, rewardGOLD: 50, done: false }
-        }
-    };
-    calculateStats();
-    
-    document.getElementById("character-creation").style.display = "none";
-    document.getElementById("game-world").style.display = "flex";
-    
-    selectMonster('snake');
-    startGameLoop();
-    updateAllUI();
-    saveGame();
-});
-
-function startGameLoop() {
-    if (gameLoopInterval) clearInterval(gameLoopInterval);
-    gameLoopInterval = setInterval(() => {
-        if (currentTarget && currentTarget.hp > 0) {
-            monsterAttack();
-        }
-        updateCooldowns();
-        updateDailyRewardTimer();
-    }, 2000); // Monster attacks every 2 seconds
-}
-
-// =================================================================
-// ✅ DATA PERSISTENCE (SAVE/LOAD)
-// =================================================================
-function saveGame() {
-    if (player) {
-        localStorage.setItem('yulgang_save', JSON.stringify(player));
-        logCombat('เกมถูกบันทึกแล้ว', 'log-system');
-    }
-}
-function loadGame() {
-    const savedData = localStorage.getItem('yulgang_save');
-    if (savedData) {
-        player = JSON.parse(savedData);
-        document.getElementById("character-creation").style.display = "none";
-        document.getElementById("game-world").style.display = "flex";
-        
-        calculateStats();
-        selectMonster(Object.keys(monsters)[0]);
-        startGameLoop();
-        updateAllUI();
-    }
-}
-
-
-// =================================================================
-// ✅ UI UPDATE FUNCTIONS
-// =================================================================
-function updateAllUI() {
-    if (!player) return;
-    // Character Status
-    document.getElementById("info-name").textContent = player.name;
-    document.getElementById("info-class").textContent = player.job;
-    document.getElementById("info-lv").textContent = player.lv;
-    document.getElementById("info-exp").textContent = player.exp;
-    document.getElementById("info-exp-req").textContent = getRequiredExp();
-    document.getElementById("info-hp").textContent = player.hp;
-    document.getElementById("info-max-hp").textContent = player.maxHp;
-    document.getElementById("info-mp").textContent = player.mp;
-    document.getElementById("info-max-mp").textContent = player.maxMp;
-    document.getElementById("info-atk").textContent = player.stats.atk;
-    document.getElementById("info-def").textContent = player.stats.def;
-    document.getElementById("info-crit").textContent = player.stats.crit;
-    document.getElementById("info-pen").textContent = player.stats.pen;
-    document.getElementById("info-spd").textContent = player.stats.spd;
-    // Web3
-    document.getElementById("yg-token").textContent = player.ygToken || 0;
-    document.getElementById("gold-token").textContent = player.gold || 0;
-    // Inventory & Quests
-    renderInventory();
-    renderQuests();
-    updateMonsterUI();
-}
-
-function updateMonsterUI() {
-    if (!currentTarget) return;
-    document.getElementById("monster-name").textContent = `${currentTarget.name} (Lv.${currentTarget.lv})`;
-    document.getElementById("monster-hp").textContent = currentTarget.hp;
-    document.getElementById("monster-max-hp").textContent = currentTarget.maxHp;
-    const hpPercent = (currentTarget.hp / currentTarget.maxHp) * 100;
-    document.getElementById("monster-hp-fill").style.width = `${hpPercent}%`;
-}
-
-function renderInventory() {
-    const slots = document.getElementById("item-slots");
-    slots.innerHTML = "";
-    player.inventory.forEach((item, index) => {
-        const div = document.createElement("div");
-        div.className = "item-slot";
-        let button = "";
-        if (item.type === 'weapon' || item.type === 'armor') {
-            button = `<button onclick="equipItem(${index})">สวมใส่</button>`;
-        } else if (item.type === 'consumable') {
-             button = `<button onclick="useItem('${item.id}')">ใช้</button>`;
-        }
-        div.innerHTML = `${item.name} x${item.quantity || 1} ${button}`;
-        slots.appendChild(div);
-    });
-
-    const potion = player.inventory.find(i => i.id === 'hp_potion');
-    document.getElementById('potion-count').textContent = potion ? potion.quantity : 0;
-    document.getElementById('potion-btn').disabled = !potion || potion.quantity === 0;
-
-    document.getElementById("equip-weapon").textContent = player.equipment.weapon ? player.equipment.weapon.name : '-';
-    document.getElementById("equip-armor").textContent = player.equipment.armor ? player.equipment.armor.name : '-';
-}
-
-function renderQuests() {
-    const list = document.getElementById("quest-list");
-    list.innerHTML = "";
-    for (const key in player.quests) {
-        const q = player.quests[key];
-        const li = document.createElement("li");
-        const progress = `(${q.current}/${q.required})`;
-        if (q.done) {
-            li.innerHTML = `✅ <s>${q.title}</s>`;
-        } else {
-            li.innerHTML = `📜 ${q.title} ${progress}`;
-            if (q.current >= q.required) {
-                li.innerHTML += ` <button onclick="claimQuestReward('${key}')">สำเร็จเควส</button>`;
-            }
-        }
-        list.appendChild(li);
-    }
-}
-
-function populateMonsterSelect() {
-    const select = document.getElementById("monster-select");
-    for (const id in monsters) {
-        const option = document.createElement("option");
-        option.value = id;
-        option.textContent = `${monsters[id].name} (Lv.${monsters[id].lv})`;
-        select.appendChild(option);
-    }
-}
-
-// =================================================================
-// ✅ COMBAT SYSTEM
-// =================================================================
-function playerAttack() {
-    if (!currentTarget || currentTarget.hp <= 0) return;
-
-    const stats = player.stats;
-    const isCrit = Math.random() < (stats.crit / 100);
-    const baseDamage = Math.max(1, stats.atk - currentTarget.def);
-    const finalDamage = Math.floor(isCrit ? baseDamage * 1.5 : baseDamage);
-    
-    currentTarget.hp = Math.max(0, currentTarget.hp - finalDamage);
-    
-    logCombat(`คุณโจมตี ${currentTarget.name} ทำความเสียหาย ${finalDamage} ${isCrit ? '(คริติคอล!)' : ''}`, 'log-player');
-    showDamagePopup(finalDamage, document.getElementById('monster-area'), true, isCrit);
-    
-    if (currentTarget.hp <= 0) {
-        defeatMonster();
-    }
-    updateMonsterUI();
-}
-
-function monsterAttack() {
-    if (!player || player.hp <= 0) return;
-    
-    const baseDamage = Math.max(1, currentTarget.atk - player.stats.def);
-    player.hp = Math.max(0, player.hp - baseDamage);
-    
-    logCombat(`${currentTarget.name} โจมตีคุณ ทำความเสียหาย ${baseDamage}`, 'log-monster');
-    showDamagePopup(baseDamage, document.getElementById('character-status'), false);
-
-    if (player.hp <= 0) {
-        gameOver();
-    }
-    updateAllUI();
-}
-
-function defeatMonster() {
-    logCombat(`คุณกำจัด ${currentTarget.name} ได้แล้ว!`, 'log-system');
-    gainEXP(currentTarget.dropEXP);
-    gainGold(currentTarget.dropGOLD);
-    
-    // Item Drops
-    currentTarget.dropItems.forEach(drop => {
-        if (Math.random() < drop.chance) {
-            addItemToInventory(drop.id, 1);
-            logCombat(`ได้รับ ${items[drop.id].name} 1 ชิ้น!`, 'log-system');
-        }
-    });
-
-    updateQuestProgress(currentTarget.id);
-    
-    // Respawn after a delay
-    setTimeout(() => {
-        selectMonster(currentTarget.id);
-    }, 3000);
-}
-
-function useSkill(name) {
-    const now = Date.now();
-    const cooldown = skillCooldowns[name];
-    if (now < cooldown.lastUsed + cooldown.duration) {
-        logCombat(`สกิล ${name} กำลังคูลดาวน์`, 'log-system');
-        return;
-    }
-    cooldown.lastUsed = now;
-    logCombat(`คุณใช้สกิล ${name}!`, 'log-player');
-    
-    // Skill effect: double attack
-    playerAttack();
-    setTimeout(playerAttack, 200);
-    
-    updateCooldowns();
-}
-
-function gameOver() {
-    clearInterval(gameLoopInterval);
-    document.getElementById("game-over-modal").style.display = "flex";
-    localStorage.removeItem('yulgang_save'); // Clear save on death
-}
-
-
-// =================================================================
-// ✅ PLAYER & STATS MANAGEMENT
-// =================================================================
-function calculateStats() {
-    // Reset to base stats + job bonus
-    player.stats = { ...player.baseStats };
-    const job = player.job;
-    const base = {
-        swordsman: { atk: 5, def: 5, maxHp: 20 },
-        archer: { atk: 3, spd: 5, crit: 5 },
-        mage: { atk: 8, maxMp: 50 },
-        assassin: { atk: 4, crit: 10, spd: 5 },
-        spearman: { atk: 4, pen: 10, def: 2 }
-    };
-    const jobBonus = base[job] || {};
-    for (const stat in jobBonus) {
-        player.stats[stat] = (player.stats[stat] || 0) + jobBonus[stat];
-        if (stat === 'maxHp' || stat === 'maxMp') {
-            player[stat] = (player[stat] || 0) + jobBonus[stat];
-        }
-    }
-    // Add equipment stats
-    for (const slot in player.equipment) {
-        const item = player.equipment[slot];
-        if (item) {
-            for (const stat in item.stats) {
-                player.stats[stat] += item.stats[stat];
-            }
-        }
-    }
-}
-
-function getRequiredExp() {
-    return player.lv * 100;
-}
-
-function gainEXP(amount) {
-    player.exp += amount;
-    logCombat(`ได้รับ ${amount} EXP`, 'log-system');
-    while (player.exp >= getRequiredExp()) {
-        player.exp -= getRequiredExp();
-        player.lv++;
-        
-        // Stat increase on level up
-        player.maxHp += 20;
-        player.hp = player.maxHp; // Full heal
-        player.maxMp += 10;
-        player.mp = player.maxMp;
-        player.baseStats.atk += 2;
-        player.baseStats.def += 1;
-        
-        calculateStats();
-        logCombat(`🎉 เลเวลอัป! คุณคือเลเวล ${player.lv} แล้ว! 🎉`, 'log-system');
-    }
-    updateAllUI();
-}
-
-function gainGold(amount) {
-    player.gold = (player.gold || 0) + amount;
-    logCombat(`ได้รับ ${amount} GOLD`, 'log-system');
-    updateAllUI();
-}
-
-
-// =================================================================
-// ✅ ITEM & INVENTORY SYSTEM
-// =================================================================
-function addItemToInventory(itemId, quantity) {
-    const itemData = items[itemId];
-    if (!itemData) return;
-    
-    const existingItem = player.inventory.find(i => i.id === itemId);
-    if (existingItem) {
-        existingItem.quantity += quantity;
-    } else {
-        player.inventory.push({ ...itemData, quantity });
-    }
-    renderInventory();
-}
-
-function useItem(itemId) {
-    const itemIndex = player.inventory.findIndex(i => i.id === itemId);
-    if (itemIndex > -1) {
-        const item = player.inventory[itemIndex];
-        if(item.type === 'consumable') {
-            item.effect(player);
-            item.quantity--;
-            logCombat(`ใช้ ${item.name}`, 'log-player');
-            if (item.quantity <= 0) {
-                player.inventory.splice(itemIndex, 1);
-            }
-            updateAllUI();
-        }
-    }
-}
-
-function equipItem(itemIndex) {
-    // (This part needs more logic for unequipping previous item)
-    // For simplicity, we assume one weapon/armor at a time.
-    // A full implementation would move the old item back to inventory.
-    const item = player.inventory[itemIndex];
-    if (!item.type) return;
-
-    player.equipment[item.type] = item;
-    player.inventory.splice(itemIndex, 1);
-
-    calculateStats();
-    updateAllUI();
-    logCombat(`สวมใส่ ${item.name}`, 'log-system');
-}
-
-// =================================================================
-// ✅ QUEST SYSTEM
-// =================================================================
-function updateQuestProgress(monsterId) {
-    for (const key in player.quests) {
-        const q = player.quests[key];
-        if (!q.done && q.targetId === monsterId) {
-            q.current = Math.min(q.required, q.current + 1);
-        }
-    }
-    renderQuests();
-}
-
-function claimQuestReward(questKey) {
-    const q = player.quests[questKey];
-    if (q && !q.done && q.current >= q.required) {
-        q.done = true;
-        gainEXP(q.rewardEXP);
-        gainGold(q.rewardGOLD);
-        logCombat(`เควส '${q.title}' สำเร็จ!`, 'log-system');
-        renderQuests();
-    }
-}
-
-// =================================================================
-// ✅ OTHER SYSTEMS (WEB3, DAILY, ETC)
-// =================================================================
-function selectMonster(id) {
-    const monsterData = monsters[id];
-    currentTarget = { ...monsterData, hp: monsterData.hp, maxHp: monsterData.hp, id: id };
-    updateMonsterUI();
-    logCombat(`คุณกำลังเผชิญหน้ากับ ${currentTarget.name}!`, 'log-monster');
-}
-
-function mintNFT() {
-    const cost = 1000;
-    if (player.gold >= cost) {
-        player.gold -= cost;
-        const nftWeapon = {
-            id: 'nft_sword_1',
-            name: 'NFT ดาบเพลิงมายา',
-            type: 'weapon',
-            stats: { atk: 25, crit: 5 }
-        };
-        player.inventory.push(nftWeapon);
-        logCombat('Mint NFT Weapon สำเร็จ!', 'log-system');
-        updateAllUI();
-    } else {
-        logCombat('GOLD ไม่เพียงพอสำหรับ Mint NFT', 'log-system');
-    }
-}
-function stakeToken() {
-    // Simplified: No actual staking over time yet.
-    const cost = 50;
-    if ((player.ygToken || 0) >= cost) {
-        player.ygToken -= cost;
-        gainGold(100);
-        logCombat('คุณ Stake 50 YG และได้รับ 100 Gold', 'log-system');
-        updateAllUI();
-    } else {
-        logCombat('YG Token ไม่เพียงพอ', 'log-system');
-    }
-}
-
-function claimDailyReward() {
-  const lastClaim = localStorage.getItem("daily_claim_date");
-  const today = new Date().toDateString();
-  if (lastClaim !== today) {
-    localStorage.setItem("daily_claim_date", today);
-    gainGold(100);
-    addItemToInventory('hp_potion', 5);
-    player.ygToken = (player.ygToken || 0) + 10;
-    logCombat("รับรางวัลรายวันสำเร็จ!", 'log-system');
-    updateAllUI();
-    updateDailyRewardTimer();
-  } else {
-    alert("คุณรับรางวัลวันนี้ไปแล้ว");
-  }
-}
-
-function updateDailyRewardTimer() {
-    const btn = document.getElementById('daily-reward-btn');
-    const countdownEl = document.getElementById('countdown');
-    const lastClaim = localStorage.getItem("daily_claim_date");
-    const today = new Date().toDateString();
-
-    if (lastClaim === today) {
-        btn.disabled = true;
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        
-        const now = new Date();
-        const diff = tomorrow - now;
-
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        countdownEl.textContent = `รับได้อีกครั้งใน: ${hours}h ${minutes}m ${seconds}s`;
-    } else {
-        btn.disabled = false;
-        countdownEl.textContent = "สามารถรับรางวัลได้แล้ว!";
-    }
-}
-// =================================================================
-// ✅ UTILITY & VISUAL FEEDBACK
-// =================================================================
-function logCombat(message, className) {
-    const log = document.getElementById("combat-log");
-    log.innerHTML += `<p class="${className}">${message}</p>`;
-    log.scrollTop = log.scrollHeight; // Auto-scroll to bottom
-}
-
-function showDamagePopup(amount, targetElement, isMonster, isCrit = false) {
-    const popup = document.createElement('div');
-    popup.textContent = amount;
-    popup.className = 'damage-popup';
-    if(isMonster) popup.classList.add('damage-monster');
-    else popup.classList.add('damage-player');
-
-    if (isCrit) popup.classList.add('damage-crit');
-
-    targetElement.appendChild(popup);
-    setTimeout(() => popup.remove(), 1000);
-}
-
-function updateCooldowns() {
-    const now = Date.now();
-    const skillBtn = document.getElementById('skill-btn');
-    const cooldown = skillCooldowns['Twin Strike'];
-    if (now < cooldown.lastUsed + cooldown.duration) {
-        skillBtn.disabled = true;
-        const remaining = ((cooldown.lastUsed + cooldown.duration - now) / 1000).toFixed(1);
-        skillBtn.textContent = `สกิล (${remaining}s)`;
-    } else {
-        skillBtn.disabled = false;
-        skillBtn.textContent = 'ใช้สกิล (5s)';
-    }
-}
-
-</script>
 </body>
 </html>
