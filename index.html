@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YG Light Bot - Yulgang Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="main-window">
+    <div class="window-header">
+      <span class="window-title">ygLight Bot v14</span>
+      <div class="window-buttons">
+        <button class="btn-close">×</button>
+      </div>
+    </div>
+
+    <div class="window-tabs">
+      <button class="tab" data-tab="status">Status</button>
+      <button class="tab" data-tab="inventory">Inventory</button>
+      <button class="tab" data-tab="skills">Skills</button>
+      <button class="tab" data-tab="quest">Quests</button>
+      <button class="tab" data-tab="log">Log</button>
+    </div>
+
+    <div class="window-content">
+      <div id="status" class="tab-content active">
+        <p>HP: <span id="hp">100</span> / MP: <span id="mp">50</span> / EXP: <span id="exp">0%</span></p>
+        <p>Level: <span id="level">1</span> | Class: <span id="job">Novice</span></p>
+      </div>
+
+      <div id="inventory" class="tab-content"></div>
+      <div id="skills" class="tab-content"></div>
+      <div id="quest" class="tab-content"></div>
+      <div id="log" class="tab-content log-box"></div>
+    </div>
+
+    <div class="bot-controls">
+      <button onclick="toggleAutoBot()">🔄 Toggle Auto Bot</button>
+      <button onclick="openShop()">🛒 Open Shop</button>
+      <button onclick="useBuff()">💫 Buff</button>
+    </div>
+  </div>
+
+  <canvas id="map-canvas" width="800" height="400"></canvas>
+
+  <script src="data.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
