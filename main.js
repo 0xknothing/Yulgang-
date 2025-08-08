@@ -24,9 +24,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.updateWalletUI({ address: null }, 0);
         ui.addLog("ygLight Bot Simulator Initialized.", "success");
         ui.addLog("Welcome! Press 'Start Bot' to begin.", "info");
+    } else {
+        // If loaded, we still need to run the initial UI updates for dynamic elements
+        ui.updateHUD();
+        ui.updateInventoryUI();
+        ui.updateBuffsUI();
+        ui.updateQuestLogUI();
     }
     
-    // Render dynamic elements regardless
+    // Render dynamic elements on map regardless of load state
     ui.renderPlayer();
     ui.renderMonsters(activeMonsters);
     ui.renderLoot();
@@ -45,5 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
     game.startGameLoop();
     
     // Setup Auto-save
-    setInterval(saveGame, 60000);
+    setInterval(() => {
+        // Only save if the bot is running to avoid saving an idle state over a working one
+        if (document.getElementById('start-btn').disabled === false) { // A simple check if bot is active
+             saveGame();
+        }
+    }, 60000);
 });
