@@ -1,108 +1,160 @@
 /* style.css */
+* { box-sizing: border-box; }
+
 body {
-    background-color: #3a6ea5;
+    background-color: #1e1e1e;
     font-family: Tahoma, "MS Sans Serif", sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     color: #000;
     margin: 0;
-    padding: 20px;
+    padding: 10px;
     overflow: hidden;
+    height: 100vh;
+}
+
+#main-container {
+    display: grid;
+    grid-template-columns: 320px 1fr 300px;
+    grid-template-rows: 1fr;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+}
+
+#left-ui-column, #right-ui-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+#center-column {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 10px;
+    overflow: hidden;
+}
+
+#game-area {
+    background-color: #000;
+    overflow: auto; /* ทำให้เลื่อนดูแผนที่ได้ */
+    position: relative;
+    border: 1px solid #555;
+}
+
+#game-world {
+    position: relative;
+    width: 1920px; /* <<-- ตั้งค่าความกว้างแผนที่ของคุณ */
+    height: 1080px; /* <<-- ตั้งค่าความสูงแผนที่ของคุณ */
+}
+
+#game-map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+#bottom-log-area {
+    height: 180px;
 }
 
 .window {
     background-color: #ece9d8;
     border: 2px solid;
     border-color: #fff #6a6a6a #6a6a6a #fff;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-    position: absolute;
+    width: 100%;
+    flex-shrink: 0; /* ป้องกันการหดตัวใน flex container */
 }
 
 .window-header {
-    background-color: #005aee;
+    background: linear-gradient(to right, #005aee, #3a8cff);
     color: white;
-    padding: 3px 5px;
+    padding: 3px 8px;
     font-weight: bold;
     cursor: move;
 }
 
-.window-content {
-    padding: 10px;
+.window-content { padding: 8px; }
+
+/* --- Player & Monster Sprites --- */
+#player, .monster, .npc-marker, .loot-item {
+    position: absolute;
+    width: 48px;  /* <<-- ขนาด sprite width */
+    height: 48px; /* <<-- ขนาด sprite height */
+    background-repeat: no-repeat;
+    transform: translate(-50%, -50%); /* จัดกลาง sprite */
+    image-rendering: pixelated; /* ทำให้ภาพ sprite คมชัดเมื่อขยาย */
 }
 
-button {
-    font-family: inherit;
-    font-size: 14px;
-    border: 2px solid;
-    border-color: #fff #6a6a6a #6a6a6a #fff;
-    background-color: #ece9d8;
-    padding: 5px 15px;
-    margin: 2px;
+#player {
+    background-image: url('assets/player_sprite.png');
+    z-index: 10;
 }
 
-button:active {
-    border-color: #6a6a6a #fff #fff #6a6a6a;
+.monster {
+    background-image: url('assets/monster_sprite.png');
+    z-index: 9;
 }
 
-hr {
-    border: 0;
-    border-top: 1px solid #999;
-    margin: 10px 0;
+.npc-marker {
+    background-image: url('assets/npc_sprite.png');
+    z-index: 8;
+    cursor: pointer;
 }
 
-/* --- Positioning of windows --- */
-.control-panel { top: 20px; left: 20px; }
-#status-window { top: 150px; left: 20px; width: 300px; }
-#log-window { top: 20px; left: 350px; width: 450px; height: 300px; }
-#settings-window { top: 340px; left: 350px; width: 250px; }
-#inventory-window { top: 380px; left: 20px; width: 300px; }
-#buffs-window { top: 340px; left: 620px; width: 250px; }
-#quest-log-window { top: 500px; left: 20px; width: 300px; }
-#npc-window { top: 200px; left: 500px; width: 350px; z-index: 10; }
-#wallet-window { top: 480px; left: 620px; width: 350px; }
-
-#log-content {
-    height: 250px;
-    overflow-y: auto;
-    background-color: #fff;
-    border: 1px solid #6a6a6a;
-    padding: 5px;
+.loot-item {
+    background-image: url('assets/loot_icon.png');
+    z-index: 11;
+    cursor: pointer;
 }
 
-/* --- Status Bars --- */
-.status-bar { display: flex; align-items: center; margin-bottom: 5px; }
+.monster-hp {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 5px;
+    background-color: #555;
+    border: 1px solid #000;
+    border-radius: 2px;
+}
+
+.monster-hp::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background-color: #ff4141;
+    width: var(--hp-percent, 100%); /* ใช้ CSS variable */
+    border-radius: 1px;
+}
+
+/* --- Log Window --- */
+#log-window { height: 100%; }
+#log-content { height: calc(100% - 30px); overflow-y: scroll; background: #fff; border-top: 1px solid #6a6a6a;}
+
+/* --- Damage Text --- */
+.damage-text { position: absolute; font-size: 18px; font-weight: bold; color: yellow; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; animation: floatUp 1s forwards; pointer-events: none; z-index: 20; }
+.player-damage { color: red; }
+@keyframes floatUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-50px); opacity: 0; } }
+
+/* ... (Style อื่นๆ สามารถนำมาใช้ได้เหมือนเดิม แต่ปรับ font-size และ padding เล็กน้อยเพื่อให้เข้ากับ layout ใหม่) ... */
+.status-bar, .setting-item { margin-bottom: 8px; }
+button { padding: 4px 10px; margin: 2px; }
+hr { border: 0; border-top: 1px solid #999; margin: 5px 0; }
+.status-bar { display: flex; align-items: center; }
 .label { width: 40px; }
-.bar-container { flex-grow: 1; height: 18px; background-color: #c0c0c0; border: 1px solid #888; }
+.bar-container { flex-grow: 1; height: 16px; background-color: #c0c0c0; border: 1px solid #888; }
 .bar { height: 100%; transition: width 0.2s; }
 .hp { background-color: #ff4141; }
 .mp { background-color: #4169ff; }
 .exp { background-color: #ffd700; }
-
-/* --- Log Message Types --- */
-#log-content p { margin: 2px 0; border-bottom: 1px dotted #ccc; padding-bottom: 2px;}
-.log-info { color: #00008b; }
-.log-success { color: #006400; }
-.log-error { color: #8b0000; }
-.log-item { color: #8a2be2; }
-.log-web3 { color: #008080; }
-
-/* --- Game World & Entities --- */
-#game-world { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-#player { position: absolute; width: 40px; height: 40px; background-color: rgba(0, 100, 255, 0.7); border: 2px solid #00BFFF; border-radius: 50%; z-index: 5; box-shadow: 0 0 10px #00BFFF; }
-.monster { position: absolute; width: 50px; height: 50px; background-color: rgba(255, 0, 0, 0.5); border-radius: 50%; border: 2px solid red; color: white; text-align: center; font-size: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; user-select: none; }
-.monster-hp { background-color: rgba(0,0,0,0.7); padding: 1px 3px; border-radius: 3px; }
-.npc-marker { position: absolute; width: 60px; height: 60px; background-color: rgba(0, 100, 255, 0.5); border-radius: 50%; border: 2px solid blue; color: white; text-align: center; display: flex; justify-content: center; align-items: center; font-size: 12px; cursor: pointer; }
-.loot-item { position: absolute; width: 60px; height: 20px; background-color: #ffd700; border: 1px solid #b8860b; border-radius: 5px; text-align: center; font-size: 11px; padding-top: 4px; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); cursor: pointer; }
-
-/* --- Damage Text Animation --- */
-.damage-text { position: absolute; font-size: 18px; font-weight: bold; color: yellow; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; animation: floatUp 1s forwards; pointer-events: none; }
-.player-damage { color: red; }
-@keyframes floatUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-50px); opacity: 0; } }
-
-/* --- Settings UI --- */
-.setting-item { margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; }
-.setting-item label { flex-basis: 100%; margin-bottom: 5px; }
-.setting-item input[type="range"] { flex-grow: 1; }
-
-/* --- Wallet UI --- */
-#nft-list { max-height: 100px; overflow-y: auto; background: #ddd; padding: 5px; border: 1px inset #888; }
+#wallet-info button { padding: 2px 5px; font-size: 11px; }
+#nft-list { max-height: 80px; overflow-y: auto; background: #ddd; padding: 5px; border: 1px inset #888; font-size: 12px; }
 .nft-item { border-bottom: 1px solid #aaa; padding: 2px; }
