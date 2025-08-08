@@ -3,13 +3,13 @@ import { character, activeMonsters, lootOnGround, settings } from './data.js';
 import { simulatedWallet, claimableKnot } from './web3.js';
 import * as ui from './ui.js';
 
-const SAVE_KEY = 'yulgangSaveData';
+const SAVE_KEY = 'yulgangSaveData_v2';
 
 export function saveGame() {
     try {
         const saveData = {
             character,
-            activeMonsters, // Save full monster state including dead ones for respawn
+            activeMonsters,
             lootOnGround,
             wallet: simulatedWallet,
             claimableKnot,
@@ -30,7 +30,6 @@ export function saveGame() {
 export function loadGame() {
     const savedString = localStorage.getItem(SAVE_KEY);
     if (!savedString) {
-        ui.addLog('No save file found. Starting a new game.', 'info');
         return false;
     }
 
