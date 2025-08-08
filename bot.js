@@ -136,7 +136,7 @@ export function run() {
 
     activeMonsters.forEach(m => {
         if (!m.isDead && getDistance(character.position, m.position) < 150) {
-            character.hp -= m.attack * (TICK_INTERVAL / 1000);
+            character.hp -= m.attack * (500 / 1000); // Damage per tick
             if (character.hp < 0) character.hp = 0;
             ui.showDamageText(m.attack, character.position, true);
         }
@@ -155,4 +155,3 @@ function findNearestMonster(char, monsters) { return monsters.filter(m => !m.isD
 
 window.acceptQuest = (quest) => { character.activeQuestId = quest.id; character.questProgress.killCount = 0; ui.addLog(`Quest accepted: ${quest.title}`, 'success'); document.getElementById('npc-window').style.display = 'none'; ui.updateQuestLogUI(); };
 window.completeQuest = (quest) => { character.exp += quest.rewards.exp; character.inventory.Gold += quest.rewards.gold; character.activeQuestId = null; ui.addLog(`Quest completed! Gained ${quest.rewards.exp} EXP & ${quest.rewards.gold} Gold.`, 'success'); document.getElementById('npc-window').style.display = 'none'; ui.updateQuestLogUI(); };
-
