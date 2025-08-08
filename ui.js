@@ -9,11 +9,11 @@ export function updateHUD() {
     
     const hpPercent = (character.hp / character.maxHp) * 100;
     document.getElementById('hp-bar').style.width = `${hpPercent}%`;
-    document.getElementById('hp-value').innerText = `${Math.round(character.hp)} / ${character.maxHp}`;
+    document.getElementById('hp-value').innerText = `${Math.round(character.hp)}/${character.maxHp}`;
     
     const mpPercent = (character.mp / character.maxMp) * 100;
     document.getElementById('mp-bar').style.width = `${mpPercent}%`;
-    document.getElementById('mp-value').innerText = `${Math.round(character.mp)} / ${character.maxMp}`;
+    document.getElementById('mp-value').innerText = `${Math.round(character.mp)}/${character.maxMp}`;
 
     const expPercent = (character.exp / character.expToLevelUp) * 100;
     document.getElementById('exp-bar').style.width = `${expPercent}%`;
@@ -23,7 +23,7 @@ export function updateHUD() {
 export function addLog(message, type = 'info') {
     const logContent = document.getElementById('log-content');
     const p = document.createElement('p');
-    p.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`; // Use innerHTML to allow simple formatting
+    p.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
     p.className = `log-${type}`;
     logContent.appendChild(p);
     logContent.scrollTop = logContent.scrollHeight;
@@ -61,20 +61,19 @@ export function makeDraggable(windowElement) {
 export function renderPlayer() {
     const playerDiv = document.getElementById('player');
     if(playerDiv) {
-        playerDiv.style.left = `${character.position.x - playerDiv.clientWidth / 2}px`;
-        playerDiv.style.top = `${character.position.y - playerDiv.clientHeight / 2}px`;
+        playerDiv.style.left = `${character.position.x}px`;
+        playerDiv.style.top = `${character.position.y}px`;
     }
 }
 
 export function renderMonsters(monsters) {
-    const existingMonsterDivs = new Set(Array.from(gameWorld.querySelectorAll('.monster')).map(div => div.id));
+    const existingMonsterIds = new Set(Array.from(gameWorld.querySelectorAll('.monster')).map(div => div.id));
 
     monsters.forEach(monster => {
-        existingMonsterDivs.delete(monster.id);
+        existingMonsterIds.delete(monster.id);
 
         if (monster.isDead) {
-            const monsterDiv = document.getElementById(monster.id);
-            if (monsterDiv) monsterDiv.remove();
+            document.getElementById(monster.id)?.remove();
             return;
         }
 
@@ -83,47 +82,49 @@ export function renderMonsters(monsters) {
             monsterDiv = document.createElement('div');
             monsterDiv.className = 'monster';
             monsterDiv.id = monster.id;
+            const hpBarDiv = document.createElement('div');
+            hpBarDiv.className = 'monster-hp';
+            monsterDiv.appendChild(hpBarDiv);
             gameWorld.appendChild(monsterDiv);
         }
         
         monsterDiv.style.left = `${monster.position.x}px`;
         monsterDiv.style.top = `${monster.position.y}px`;
-        monsterDiv.innerHTML = `${monster.name}<span class="monster-hp">${monster.hp}/${monster.maxHp}</span>`;
+        
+        const hpPercent = (monster.hp / monster.maxHp) * 100;
+        monsterDiv.querySelector('.monster-hp').style.setProperty('--hp-percent', `${hpPercent}%`);
     });
     
-    existingMonsterDivs.forEach(id => {
-        const divToRemove = document.getElementById(id);
-        if(divToRemove) divToRemove.remove();
-    });
+    existingMonsterIds.forEach(id => document.getElementById(id)?.remove());
 }
 
 export function renderNPCs() {
     npcs.forEach(npc => {
-        if (!document.getElementById(npc.id)) {
-            const npcDiv = document.createElement('div');
+        let npcDiv = document.getElementById(npc.id);
+        if (!npcDiv) {
+            npcDiv = document.createElement('div');
             npcDiv.id = npc.id;
             npcDiv.className = 'npc-marker';
-            npcDiv.textContent = npc.name;
-            npcDiv.style.left = `${npc.position.x}px`;
-            npcDiv.style.top = `${npc.position.y}px`;
             npcDiv.onclick = () => openNpcWindow(npc);
             gameWorld.appendChild(npcDiv);
         }
+        npcDiv.style.left = `${npc.position.x}px`;
+        npcDiv.style.top = `${npc.position.y}px`;
     });
 }
 
 export function renderLoot() {
     document.querySelectorAll('.loot-item').forEach(el => el.remove());
     lootOnGround.forEach(loot => {
-        if (!document.getElementById(loot.id)) {
-            const lootDiv = document.createElement('div');
+        let lootDiv = document.getElementById(loot.id);
+        if (!lootDiv) {
+            lootDiv = document.createElement('div');
             lootDiv.id = loot.id;
             lootDiv.className = 'loot-item';
-            lootDiv.textContent = loot.itemName;
-            lootDiv.style.left = `${loot.position.x}px`;
-            lootDiv.style.top = `${loot.position.y}px`;
             gameWorld.appendChild(lootDiv);
         }
+        lootDiv.style.left = `${loot.position.x}px`;
+        lootDiv.style.top = `${loot.position.y}px`;
     });
 }
 
