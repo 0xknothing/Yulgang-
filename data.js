@@ -1,7 +1,7 @@
 // data.js
 export const GRID_SIZE = 50; // pixels
-export const MAP_WIDTH = 1280; // pixels
-export const MAP_HEIGHT = 800; // pixels
+export const MAP_WIDTH = 1920; // pixels
+export const MAP_HEIGHT = 1080; // pixels
 
 const gridCols = Math.floor(MAP_WIDTH / GRID_SIZE);
 const gridRows = Math.floor(MAP_HEIGHT / GRID_SIZE);
@@ -16,7 +16,7 @@ export let character = {
   maxMp: 50,
   exp: 0,
   expToLevelUp: 1000,
-  position: { x: 150, y: 250 },
+  position: { x: 960, y: 540 },
   speed: 150, // pixels per second
   path: [],
   attackRange: 75,
@@ -63,18 +63,18 @@ export const monstersData = {
 };
 
 export let activeMonsters = [
-  { id: 'm1', ...monstersData.Poring, hp: 30, position: { x: 250, y: 450 }, isDead: false, respawnTime: 0 },
-  { id: 'm2', ...monstersData.Poring, hp: 30, position: { x: 350, y: 500 }, isDead: false, respawnTime: 0 },
-  { id: 'm3', ...monstersData.Fox, hp: 100, position: { x: 550, y: 150 }, isDead: false, respawnTime: 0 },
-  { id: 'm4', ...monstersData.Poring, hp: 30, position: { x: 600, y: 550 }, isDead: false, respawnTime: 0 },
-  { id: 'boss1', ...monstersData.World_Boss, hp: 2000, position: {x: 800, y: 300}, isDead: false, respawnTime: 0 }
+  { id: 'm1', ...monstersData.Poring, hp: 30, position: { x: 800, y: 600 }, isDead: false, respawnTime: 0 },
+  { id: 'm2', ...monstersData.Poring, hp: 30, position: { x: 900, y: 650 }, isDead: false, respawnTime: 0 },
+  { id: 'm3', ...monstersData.Fox, hp: 100, position: { x: 1100, y: 400 }, isDead: false, respawnTime: 0 },
+  { id: 'm4', ...monstersData.Poring, hp: 30, position: { x: 1200, y: 700 }, isDead: false, respawnTime: 0 },
+  { id: 'boss1', ...monstersData.World_Boss, hp: 2000, position: {x: 1500, y: 500}, isDead: false, respawnTime: 0 }
 ];
 
 export let lootOnGround = [];
 
 export const npcs = [
-    { id: 'npc1', name: 'Quest Master', type: 'Quest', position: { x: 100, y: 200 } },
-    { id: 'npc2', name: 'Potion Seller', type: 'Shop', position: { x: 100, y: 300 } }
+    { id: 'npc1', name: 'Quest Master', type: 'Quest', position: { x: 900, y: 450 } },
+    { id: 'npc2', name: 'Potion Seller', type: 'Shop', position: { x: 1000, y: 450 } }
 ];
 
 export const quests = {
