@@ -1,0 +1,513 @@
+<!DOCTYPE html><html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ygLight Bot - Yulgang Simulation (Custom Map Image + YG Skin)</title>
+  <style>
+    /* ---------- ygLight / WinXP Skin ---------- */
+    :root{
+      --xp-bg:#008080; --xp-win:#d4d0c8; --xp-title1:#2457c5; --xp-title2:#0b2c8a; --xp-title-text:#fff;
+      --panel:#efefef; --dark:rgba(0,0,0,.78);
+    }
+    *{box-sizing:border-box; user-select:none}
+    html,body{height:100%}
+    body{margin:0;font-family:Tahoma,Segoe UI,sans-serif;background:var(--xp-bg);color:#111;overflow:hidden}
+    .window{position:absolute;background:var(--xp-win);border:2px solid #000;box-shadow:3px 3px #404040;border-radius:2px}
+    .title-bar{background:linear-gradient(180deg,var(--xp-title1),var(--xp-title2));color:var(--xp-title-text);padding:6px 10px;font-weight:700;display:flex;align-items:center;gap:8px;cursor:move}
+    .title-bar .btns{margin-left:auto;display:flex;gap:6px}
+    .tb-btn{width:16px;height:16px;background:linear-gradient(#fff,#c0c0c0);border:1px solid #222;display:inline-block;box-shadow:inset -1px -1px #707070,inset 1px 1px #fff}
+    .content{padding:10px;background:var(--panel);border-top:1px solid #fff}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .col{display:flex;flex-direction:column;gap:6px}
+    .section{margin:8px 0}
+    .pill{padding:4px 8px;border:1px solid #000;background:#eee;box-shadow:inset 1px 1px #fff,inset -1px -1px #999}
+    button{padding:6px 10px;border:1px solid #000;background:linear-gradient(#fff,#d9d9d9);cursor:pointer;box-shadow:inset 1px 1px #fff,inset -1px -1px #999}
+    button:active{transform:translateY(1px)}
+    label{display:flex;gap:6px;align-items:center}
+    input[type=number]{width:64px}
+    input[type=file]{max-width:190px}
+    .chips{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{font-size:12px;background:#f0f0f0;border:1px solid #000;padding:2px 6px;box-shadow:inset 1px 1px #fff,inset -1px -1px #999}/* ---------- HUD ---------- */
+#hud{position:fixed;top:8px;right:8px;background:var(--dark);color:#fff;padding:10px 12px;border:2px solid #333;border-radius:6px;line-height:1.35;font-size:12px;min-width:210px;z-index:9}
+#hud .bar{height:8px;background:#333;border:1px solid #111;margin:3px 0}
+#hud .hp{background:linear-gradient(90deg,#c62828,#ef5350)}
+#hud .sp{background:linear-gradient(90deg,#1565c0,#42a5f5)}
+#hud .exp{background:linear-gradient(90deg,#2e7d32,#81c784)}
+
+/* ---------- Log ---------- */
+#log{background:#000;color:#0f0;height:120px;overflow-y:auto;font-family:Consolas,monospace;font-size:12px;padding:6px;border:2px solid #000}
+
+/* ---------- Scene / Map ---------- */
+#scene{position:absolute;left:0;right:0;bottom:0;top:260px;background:linear-gradient(#023,#045);border-top:2px solid #000}
+canvas{display:block;margin:0 auto;image-rendering:pixelated;border:2px solid #000;background:linear-gradient(#0a1b2e,#092137)}
+
+/* ---------- Panels ---------- */
+#botWin{top:12px;left:12px;width:560px;z-index:6}
+#invWin{top:12px;left:590px;width:320px;z-index:6}
+#skillWin{top:12px;left:920px;width:380px;z-index:6}
+#questWin{top:260px;left:12px;width:460px;z-index:6}
+#npcWin{top:260px;left:486px;width:360px;z-index:6}
+#shopWin{top:260px;left:860px;width:360px;z-index:6}
+#walletWin{top:12px;left:1310px;width:300px;z-index:6}
+#worldWin{top:260px;left:1230px;width:460px;z-index:6}
+#saveWin{top:12px;left:1620px;width:280px;z-index:6}
+#partyWin{top:12px;left:1920px;width:280px;z-index:6}
+
+.list{max-height:160px;overflow:auto;border:2px inset #fff;background:#fff;padding:6px}
+.item{display:flex;justify-content:space-between;border-bottom:1px dashed #ddd;padding:2px 0}
+.price{font-weight:700}
+
+/* ---------- Toast ---------- */
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:rgba(0,0,0,.85);color:#fff;padding:10px 14px;border-radius:8px;border:1px solid #333;display:none;z-index:10}
+
+/* ---------- MiniMap ---------- */
+#mini{position:absolute;left:12px;bottom:12px;width:180px;height:120px;background:rgba(0,0,0,.5);border:2px solid #000;color:#fff;padding:4px;font-size:11px;z-index:7}
+
+/* ---------- Element badges ---------- */
+.el{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border:1px solid #000;background:#fff;font-size:11px}
+.el .d{width:10px;height:10px;border-radius:50%}
+.el.fire .d{background:#ff7043}
+.el.water .d{background:#42a5f5}
+.el.wind .d{background:#66bb6a}
+.el.earth .d{background:#8d6e63}
+
+@media (max-width:1600px){#walletWin,#saveWin,#partyWin{display:none}#worldWin{left:12px;top:540px}#scene{top:840px}}
+
+  </style>
+</head>
+<body>
+  <!-- ===== HUD ===== -->
+  <div id="hud">
+    <div>LV <span id="lv">1</span> | Job <span id="jobLv">1</span> (<span id="job">Novice</span>)</div>
+    <div>Gold: <span id="gold">100</span> | KNOT: <span id="knot">0</span> | NFT: <span id="nft">0</span></div>
+    <div>Party: <span id="partyCnt">0</span></div>
+    <div>HP <span id="hpTxt">100/100</span><div class="bar"><div id="hpBar" class="hp" style="width:100%"></div></div></div>
+    <div>SP <span id="spTxt">50/50</span><div class="bar"><div id="spBar" class="sp" style="width:100%"></div></div></div>
+    <div>EXP<div class="bar"><div id="expBar" class="exp" style="width:0%"></div></div></div>
+    <div class="chips"><span class="chip" id="buffAgi">AGI ▲ (0s)</span><span class="chip" id="buffBless">Bless ▲ (0s)</span><span class="chip" id="chipGuard">Guard (0s)</span><span class="chip" id="chipProvoke">Provoke (0s)</span></div>
+  </div>  <!-- ===== Bot Window ===== -->  <div class="window" id="botWin">
+    <div class="title-bar"><span>ygLight Bot Panel</span><div class="btns"><span class="tb-btn"></span><span class="tb-btn"></span><span class="tb-btn"></span></div></div>
+    <div class="content">
+      <div class="row">
+        <button id="btnStart">▶ Start</button>
+        <button id="btnPause">⏸ Pause</button>
+        <button id="btnStop">⏹ Stop</button>
+        <button id="btnBuff">✨ Auto Buff</button>
+        <button id="btnHeal">💊 Use HP</button>
+        <button id="btnSettings">⚙️ Settings</button>
+      </div>
+      <div class="row">
+        <label><input type="checkbox" id="optAttack" checked> Auto Attack</label>
+        <label><input type="checkbox" id="optPickup" checked> Auto Pickup</label>
+        <label><input type="checkbox" id="optPotion" checked> Auto Potion &lt; <input type="number" id="potPct" value="50">%</label>
+        <label><input type="checkbox" id="optQuest" checked> Auto Quest</label>
+        <label><input type="checkbox" id="optAOE" checked> AOE if ≥ <input type="number" id="aoeCnt" value="3" style="width:40px"></label>
+      </div>
+      <div class="section">
+        <strong>Console</strong>
+        <div id="log"></div>
+      </div>
+    </div>
+  </div>  <!-- ===== Inventory ===== -->  <div class="window" id="invWin">
+    <div class="title-bar"><span>Inventory</span></div>
+    <div class="content">
+      <div class="row">
+        <div class="pill">Carry: <span id="carry">0/30</span></div>
+        <button id="btnDropAll">🗑 Drop All</button>
+        <button id="btnSellAll">💰 Sell All</button>
+      </div>
+      <div class="list" id="invList"></div>
+    </div>
+  </div>  <!-- ===== Skills / Job ===== -->  <div class="window" id="skillWin">
+    <div class="title-bar"><span>Skills & Job</span></div>
+    <div class="content">
+      <div class="row">
+        <div class="col" style="min-width:170px">
+          <div><strong>Job:</strong> <span id="jobName">Novice</span></div>
+          <div>Skill Pts: <span id="spoints">0</span> | Job Pts: <span id="jpoints">0</span></div>
+          <div class="col">
+            <button id="btnJobChange1" disabled>Job Change I (Lv≥10)</button>
+            <div class="row"><button id="btnToSwd" disabled>→ Swordsman</button><button id="btnToMage" disabled>→ Mage</button></div>
+            <button id="btnJobChange2" disabled>Job Change II (Lv≥30)</button>
+            <div class="row"><button id="btnToKnight" disabled>→ Knight</button><button id="btnToWizard" disabled>→ Wizard</button></div>
+          </div>
+        </div>
+        <div class="col" style="flex:1">
+          <div class="list" id="skillTree"></div>
+        </div>
+      </div>
+    </div>
+  </div>  <!-- ===== Quest Log ===== -->  <div class="window" id="questWin">
+    <div class="title-bar"><span>Quest Log</span></div>
+    <div class="content">
+      <div class="list" id="questList"></div>
+      <div class="row"><button id="btnAbandon">Abandon Selected</button></div>
+    </div>
+  </div>  <!-- ===== NPC Dialog ===== -->  <div class="window" id="npcWin">
+    <div class="title-bar"><span>NPC</span></div>
+    <div class="content">
+      <div id="npcName" class="pill">-</div>
+      <div id="npcText" style="min-height:60px;margin:6px 0">Walk to an NPC to talk.</div>
+      <div class="row" id="npcBtns"></div>
+    </div>
+  </div>  <!-- ===== Shop ===== -->  <div class="window" id="shopWin">
+    <div class="title-bar"><span>Shop</span></div>
+    <div class="content">
+      <div class="list" id="shopList"></div>
+      <div class="row"><button id="btnSellAll2">Sell All Loot</button></div>
+    </div>
+  </div>  <!-- ===== Wallet / Web3 Simulation ===== -->  <div class="window" id="walletWin">
+    <div class="title-bar"><span>Web3 Wallet (Sim)</span></div>
+    <div class="content">
+      <div id="wStatus" class="pill">Disconnected</div>
+      <div class="row">
+        <button id="btnConnect">Connect</button>
+        <button id="btnClaim">Claim KNOT</button>
+      </div>
+      <div class="section"><strong>NFTs</strong>
+        <div class="list" id="nftList"></div>
+      </div>
+      <div class="section"><strong>Marketplace (Sim)</strong>
+        <div class="list" id="mktList"></div>
+      </div>
+    </div>
+  </div>  <!-- ===== World / Maps & Dungeon ===== -->  <div class="window" id="worldWin">
+    <div class="title-bar"><span>World & Dungeon</span></div>
+    <div class="content">
+      <div class="row">
+        <div class="col" style="min-width:200px">
+          <strong>Maps</strong>
+          <div class="list" id="mapList"></div>
+          <button id="btnWarpTown">Town Portal</button>
+        </div>
+        <div class="col" style="flex:1">
+          <strong>Dungeon</strong>
+          <div class="row">
+            <button id="btnNewDungeon">Create Instance</button>
+            <button id="btnEnterDungeon">Enter</button>
+            <button id="btnLeaveDungeon">Leave</button>
+            <button id="btnForceNext">Force Next</button>
+          </div>
+          <div class="list" id="dgInfo"></div>
+          <div class="section">
+            <strong>Map Image</strong>
+            <div class="row">
+              <input type="file" id="fileMap" accept="image/*" />
+              <button id="btnLoadMapImg">Load Map Image</button>
+              <button id="btnResetMapImg">Reset</button>
+            </div>
+            <small>Tip: เลือกภาพแผนที่ แล้วกด Load — ระบบจะฝัง base64 และบันทึกอัตโนมัติ</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>  <!-- ===== Save / Load ===== -->  <div class="window" id="saveWin">
+    <div class="title-bar"><span>Save / Load</span></div>
+    <div class="content">
+      <div class="row">
+        <button id="btnSave">💾 Save</button>
+        <button id="btnLoad">📂 Load</button>
+        <button id="btnNew">🆕 New</button>
+      </div>
+      <div class="section"><small>Auto-save every 60s</small></div>
+    </div>
+  </div>  <!-- ===== Party / Co-op (AI) ===== -->  <div class="window" id="partyWin">
+    <div class="title-bar"><span>Party</span></div>
+    <div class="content">
+      <div class="row">
+        <button id="btnAddAlly">Add AI</button>
+        <button id="btnClearParty">Clear</button>
+      </div>
+      <div class="row">
+        Formation:
+        <select id="formation">
+          <option value="follow">Follow</option>
+          <option value="spread">Spread</option>
+          <option value="focus">Focus Boss</option>
+        </select>
+      </div>
+      <div class="list" id="partyList"></div>
+    </div>
+  </div>  <!-- ===== Scene / Map ===== -->  <div id="scene">
+    <canvas id="cv" width="1600" height="720"></canvas>
+    <div id="mini"><canvas id="miniCv" width="180" height="120"></canvas></div>
+  </div>  <div id="toast"></div>  <script>
+  // ===================== Core Game State =====================
+  const logBox=document.getElementById('log'); const toast=document.getElementById('toast');
+  const cv=document.getElementById('cv'); const cx=cv.getContext('2d');
+  const mini=document.getElementById('miniCv'); const mx=mini.getContext('2d');
+
+  // Elements
+  const EL={FIRE:'fire', WATER:'water', WIND:'wind', EARTH:'earth'};
+  const ELMATRIX={fire:{wind:1.25, water:0.75, earth:1.0, fire:1.0}, water:{fire:1.25, earth:0.75, wind:1.0, water:1.0}, wind:{earth:1.25, fire:0.75, water:1.0, wind:1.0}, earth:{water:1.25, wind:0.75, fire:1.0, earth:1.0}};
+  const elemMult=(a,d)=> (ELMATRIX[a]?.[d]||1.0);
+
+  // Background image (base64)
+  let bgDataURL = localStorage.getItem('yglight_map_image') || null;
+  const bgImg = new Image(); if(bgDataURL){ bgImg.src = bgDataURL; }
+
+  // Maps (add a special custom map that uses the image background)
+  const maps=[
+    {id:'custom', name:'Riverside Plains (Custom Image)', color:'#283', usesImage:true, mobs:['Poring','Fox','Thief Bug','Bandit','Farmer','Pirate'], npc:[], portals:[]},
+    {id:'forest', name:'Whispering Forest', color:'#163', mobs:['Fox','Thief Bug'], npc:[{name:'Ranger',x:220,y:220,type:'quest'}], portals:[{x:20,y:660,to:'custom',tx:1500,ty:680}]},
+    {id:'pagoda', name:'Sky Pagoda', color:'#245', mobs:['Fox','Thief Bug'], npc:[{name:'Cloud Sage',x:220,y:220,type:'quest'}], portals:[{x:20,y:660,to:'custom',tx:100,ty:660}]}
+  ];
+
+  // Boss configs (kept simple here)
+  const bosses={ custom:{name:'Banes Guardian', hp:900, atk:[22,30], telegraph:true, aoe:true, element:EL.EARTH, drop:[{it:'Ancient Relic',ch:0.5,qty:[1,1]}] } };
+
+  const state={ running:false, paused:false, currentMap:'custom',
+    player:{ x:800,y:680,hp:100,hpMax:100,sp:50,spMax:50,exp:0,expNext:100, lv:1, job:'Novice', jobLv:1, gold:100, knot:0, inv:[], carryMax:30, buffs:{agi:0,bless:0,guard:0,provoke:0}, skillPts:0, jobPts:0, element:EL.FIRE, skills:{ Bash:0, Heal:0, Sprint:0, MagnumBreak:0, Guard:0, Provoke:0, FireBolt:0 } },
+    allies:[], targets:[], drops:[], particles:[], projectiles:[], telegraphs:[], npcs:[],
+    shop:[{id:'hp_small',name:'Red Potion (S)',price:15},{id:'hp_mid',name:'Red Potion (M)',price:50},{id:'sp_small',name:'Blue Potion (S)',price:25},{id:'knife',name:'Knife +1',price:120}],
+    quests:[{id:'q_guard',name:'Guardian Trial',detail:'Defeat Banes Guardian in Villa.',need:{kill:{'Banes Guardian':1},item:{}},reward:{exp:220,gold:220}}], actQuests:[],
+    wallet:{connected:false,addr:null,nfts:[],bankKnot:0}, marketplace:[], dungeon:null,
+    perf:{spawnRate:0.02, mobCap:16},
+    spawnZones:[] // {cx,cy,r,mobs:[]}
+  };
+
+  // ===================== Utils =====================
+  const R=(a,b)=>Math.random()*(b-a)+a; const RI=(a,b)=>Math.floor(R(a,b+1));
+  const byId=(id)=>document.getElementById(id);
+  function log(t){const s=new Date().toLocaleTimeString();logBox.innerHTML+=`[${s}] ${t}<br>`;logBox.scrollTop=logBox.scrollHeight;}
+  function showToast(t){toast.textContent=t;toast.style.display='block';clearTimeout(showToast._t);showToast._t=setTimeout(()=>toast.style.display='none',1600);}
+  function setBtn(id,ok){const b=byId(id); if(b) b.disabled=!ok;}
+
+  // ===================== Map Helpers =====================
+  function rel(x,y){ // relative (0..1) to absolute canvas coords
+    return {x: x*cv.width, y: y*cv.height};
+  }
+  function setupCustomMapObjects(){
+    const m = maps.find(x=>x.id==='custom');
+    m.npc = [];
+    m.portals = [];
+    state.spawnZones = [];
+    // Approximate positions from the provided map image
+    const healer = rel(0.20,0.18); // Advance Party Camp
+    const shrine = rel(0.12,0.42); // Shrine
+    const pirate = rel(0.18,0.86); // Pirate Branch
+    const villa  = rel(0.66,0.50); // Lord Banes Villa
+    const farm   = rel(0.86,0.22); // Ruined Farm
+    const bandit = rel(0.82,0.82); // Bandits' Lair
+    const portL  = rel(0.06,0.55); // Riverside Plains (left)
+    const portR  = rel(0.94,0.45); // Hill Valley (right)
+
+    m.npc.push({name:'Healer',x:healer.x,y:healer.y,type:'healer'});
+    m.npc.push({name:'Shrine Priest',x:shrine.x,y:shrine.y,type:'quest'});
+    m.npc.push({name:'Merchant',x:pirate.x,y:pirate.y,type:'shop'});
+    m.npc.push({name:'Quest Master',x:villa.x,y:villa.y-40,type:'quest'});
+
+    // Portals to other maps
+    m.portals.push({x:portL.x,y:portL.y,to:'forest',tx:120,ty:660});
+    m.portals.push({x:portR.x,y:portR.y,to:'pagoda',tx:120,ty:660});
+
+    // Spawn zones
+    state.spawnZones.push({cx:farm.x, cy:farm.y, r:90, mobs:['Farmer','Poring']});
+    state.spawnZones.push({cx:bandit.x, cy:bandit.y, r:110, mobs:['Bandit','Thief Bug']});
+    state.spawnZones.push({cx:pirate.x-30, cy:pirate.y, r:120, mobs:['Pirate','Fox']});
+    state.spawnZones.push({cx:villa.x, cy:villa.y+40, r:100, mobs:['Poring','Fox','Thief Bug']});
+  }
+
+  function loadMap(id){ state.currentMap=id; const m=maps.find(x=>x.id===id); state.npcs = JSON.parse(JSON.stringify(m.npc||[])); state.targets=[]; state.drops=[]; state.telegraphs=[]; if(id==='custom'){ setupCustomMapObjects(); state.player.x=cv.width/2; state.player.y=cv.height-40; } log('Warped to '+m.name); }
+
+  // ===================== HUD =====================
+  function updHUD(){const p=state.player; byId('lv').textContent=p.lv; byId('job').textContent=p.job; byId('jobLv').textContent=p.jobLv; byId('gold').textContent=p.gold; byId('knot').textContent=p.knot; byId('nft').textContent=state.wallet.nfts.length; byId('hpTxt').textContent=`${p.hp}/${p.hpMax}`; byId('spTxt').textContent=`${p.sp}/${p.spMax}`; byId('hpBar').style.width=(p.hp/p.hpMax*100)+'%'; byId('spBar').style.width=(p.sp/p.spMax*100)+'%'; byId('expBar').style.width=(p.exp/p.expNext*100)+'%'; byId('buffAgi').textContent=`AGI ▲ (${Math.max(0,p.buffs.agi|0)}s)`; byId('buffBless').textContent=`Bless ▲ (${Math.max(0,p.buffs.bless|0)}s)`; byId('chipGuard').textContent=`Guard (${Math.max(0,p.buffs.guard|0)}s)`; byId('chipProvoke').textContent=`Provoke (${Math.max(0,p.buffs.provoke|0)}s)`; byId('carry').textContent=`${p.inv.length}/${p.carryMax}`; byId('jobName').textContent=p.job; byId('spoints').textContent=p.skillPts; byId('jpoints').textContent=p.jobPts; byId('partyCnt').textContent=state.allies.length; }
+
+  // ===================== Inventory =====================
+  function addItem(name,qty=1){for(let i=0;i<qty;i++){if(state.player.inv.length>=state.player.carryMax){log('Inventory full!');return false;}state.player.inv.push({name});}renderInv();updHUD();return true;}
+  function renderInv(){const c=byId('invList'); c.innerHTML=''; state.player.inv.forEach((it,idx)=>{const d=document.createElement('div'); d.className='item'; d.innerHTML=`<span>${it.name}</span><span class="row"><button data-i="${idx}" class="useBtn">Use</button><button data-i="${idx}" class="dropBtn">Drop</button></span>`; c.appendChild(d);});}
+  function sellAllLoot(){let gold=0; const priceMap={'Jellopy':2,'Fox Fur':6,'Knife +1':40,'Ancient Relic':80,'Rum Bottle':8,'Bandana':5,'Wheat':3}; state.player.inv=state.player.inv.filter(it=>{const v=priceMap[it.name]??0; if(v>0){gold+=v; return false;} return true;}); state.player.gold+=gold; log(`Sold loot for ${gold} gold.`); renderInv(); updHUD();}
+
+  // ===================== Skills / Job (short) =====================
+  const skillDefs={ 'Bash':{max:10,desc:'Melee hit',use:()=>{if(state.player.sp<5){log('Not enough SP');return false;}state.player.sp-=5; spawnHit(state.player.x+RI(-8,8),state.player.y-20); return true;}}, 'Heal':{max:10,desc:'Restore HP',use:()=>{if(state.player.sp<6){log('Not enough SP');return false;}state.player.sp-=6; state.player.hp=Math.min(state.player.hpMax,state.player.hp+24); showToast('Heal!'); return true;}}, 'Sprint':{max:5,desc:'Boost AGI',use:()=>{if(state.player.sp<4){log('Not enough SP');return false;}state.player.sp-=4; state.player.buffs.agi=12; return true;}}, 'MagnumBreak':{max:5,desc:'AOE burst',use:()=>{if(state.player.sp<8){log('Not enough SP');return false;}state.player.sp-=8; aoeBurst(state.player.x,state.player.y,90); return true;}}, 'Guard':{max:5,desc:'Reduce dmg',use:()=>{if(state.player.sp<4){log('Not enough SP');return false;}state.player.sp-=4; state.player.buffs.guard=10; return true;}}, 'Provoke':{max:5,desc:'Atk up',use:()=>{if(state.player.sp<4){log('Not enough SP');return false;}state.player.sp-=4; state.player.buffs.provoke=10; return true;}}, 'FireBolt':{max:10,desc:'Fire projectile',use:()=>{if(state.player.sp<7){log('Not enough SP');return false;}state.player.sp-=7; shootFire(); return true;}} };
+  function renderSkillTree(){const box=byId('skillTree'); box.innerHTML=''; Object.keys(state.player.skills).forEach(k=>{const lv=state.player.skills[k]; const def=skillDefs[k]; const row=document.createElement('div'); row.className='item'; row.innerHTML=`<div><strong>${k}</strong> Lv ${lv} <small>- ${def.desc}</small></div><div class="row"><button data-s="${k}" class="useSkill">Use</button><button data-u="${k}" ${state.player.skillPts?'':'disabled'}>Upgrade</button></div>`; box.appendChild(row);});}
+  function onUseSkill(n){ if(skillDefs[n]?.use()) updHUD(); }
+  function onUpgradeSkill(n){ if(!state.player.skillPts) return; const cur=state.player.skills[n]; if(cur>=skillDefs[n].max){showToast('Max level');return;} state.player.skills[n]++; state.player.skillPts--; renderSkillTree(); updHUD(); }
+
+  // ===================== Quests =====================
+  function acceptQuest(q){ if(state.actQuests.find(a=>a.id===q.id)){showToast('Already accepted');return;} const copy=JSON.parse(JSON.stringify(q)); copy.progress={kill:{},item:{}}; state.actQuests.push(copy); renderQuests(); log('Accepted quest: '+q.name); }
+  function submitQuest(q){ const need=q.need; const invCount=(n)=>state.player.inv.filter(i=>i.name===n).length; for(const m in need.kill){const n=need.kill[m]; const p=q.progress.kill[m]|0; if(p<n){showToast('Not enough kills');return;} } for(const it in need.item){const n=need.item[it]; if(invCount(it)<n){showToast('Missing items');return;} } for(const it in need.item){let n=need.item[it]; for(let i=state.player.inv.length-1;i>=0&&n>0;i--){ if(state.player.inv[i].name===it){state.player.inv.splice(i,1); n--; } }} state.player.gold+=q.reward.gold; addExp(q.reward.exp); log(`Quest completed: ${q.name} (+${q.reward.exp} EXP, +${q.reward.gold} gold)`); state.actQuests=state.actQuests.filter(a=>a.id!==q.id); renderInv(); renderQuests(); updHUD(); }
+  function abandonSelected(){ document.querySelectorAll('#questList input[type=radio]').forEach(r=>{ if(r.checked){ state.actQuests=state.actQuests.filter(a=>a.id!==r.value); }}); renderQuests(); }
+  function renderQuests(){ const box=byId('questList'); box.innerHTML=''; state.actQuests.forEach(q=>{ const needKill=Object.entries(q.need.kill||{}).map(([k,v])=>`${k}:${(q.progress.kill[k]|0)}/${v}`).join(', '); const needItem=Object.entries(q.need.item||{}).map(([k,v])=>`${k}:${v}`).join(', '); const d=document.createElement('div'); d.innerHTML=`<label class="item"><span><input type="radio" name="qsel" value="${q.id}"> <strong>${q.name}</strong> - ${q.detail}<br><small>Kill [${needKill||'-'}] | Items [${needItem||'-'}]</small></span><span><button data-q="${q.id}" class="submitBtn">Submit</button></span></label>`; box.appendChild(d); }); }
+
+  // ===================== Wallet / NFTs (Sim) =====================
+  function connect(){ if(state.wallet.connected) return; state.wallet.connected=true; state.wallet.addr='0x'+RI(10**15,10**16-1).toString(16)+RI(10**6,10**7-1).toString(16); byId('wStatus').textContent='Connected: '+state.wallet.addr.slice(0,10)+'...'; log('Wallet connected (sim).'); renderNFTs(); updHUD(); }
+  function claim(){ const gain=state.player.knot; if(gain<=0){showToast('No KNOT to claim');return;} state.wallet.bankKnot+=gain; state.player.knot=0; showToast('Claimed '+gain+' KNOT'); updHUD(); }
+  function mintNFT(name){ state.wallet.nfts.push({id:'n'+Date.now(),name}); showToast('NFT minted: '+name); renderNFTs(); updHUD(); }
+  function renderNFTs(){ const c=byId('nftList'); c.innerHTML=''; state.wallet.nfts.forEach(n=>{ const d=document.createElement('div'); d.className='item'; d.innerHTML=`<span>🧿 ${n.name}</span><span>${n.id.slice(-4)}</span>`; c.appendChild(d); }); }
+
+  // ===================== Combat / Mobs =====================
+  const mobs=[
+    {name:'Poring', hp:20, atk:[2,6], element:EL.WATER, drop:[{it:'Jellopy',ch:0.8,qty:[1,2]}]},
+    {name:'Fox', hp:28, atk:[3,7], element:EL.WIND, drop:[{it:'Fox Fur',ch:0.7,qty:[1,2]}]},
+    {name:'Thief Bug', hp:35, atk:[4,8], element:EL.EARTH, drop:[{it:'Knife +1',ch:0.15,qty:[1,1]}]},
+    {name:'Bandit', hp:40, atk:[5,9], element:EL.FIRE, drop:[{it:'Bandana',ch:0.35,qty:[1,1]}]},
+    {name:'Farmer', hp:26, atk:[3,6], element:EL.EARTH, drop:[{it:'Wheat',ch:0.6,qty:[1,2]}]},
+    {name:'Pirate', hp:44, atk:[5,10], element:EL.WATER, drop:[{it:'Rum Bottle',ch:0.45,qty:[1,1]}]}
+  ];
+
+  function dmgWithElement(base,attEl,defEl){ return Math.round(base*elemMult(attEl,defEl)); }
+
+  function spawnMob(){ if(state.targets.length>state.perf.mobCap) return; const cur=maps.find(x=>x.id===state.currentMap); let mname='Poring', x=RI(60,cv.width-60), y=RI(240,cv.height-40); if(cur.id==='custom' && state.spawnZones.length){ const z=state.spawnZones[RI(0,state.spawnZones.length-1)]; const ang=R(0,Math.PI*2); const r=R(10,z.r); x=z.cx+Math.cos(ang)*r; y=z.cy+Math.sin(ang)*r; mname = z.mobs[RI(0,z.mobs.length-1)]; }
+    const pick = mobs.find(mm=>mm.name===mname) || mobs[0]; const t = JSON.parse(JSON.stringify(pick)); t.x=x; t.y=y; t.hpCur=t.hp; t.cd=0; state.targets.push(t);
+  }
+
+  function attackNearest(){ if(!byId('optAttack').checked) return; const p=state.player; let near=null, dmin=1e9; state.targets.forEach(t=>{ const d=(t.x-p.x)**2+(t.y-p.y)**2; if(d<dmin){dmin=d; near=t;} }); if(!near) return; if(Math.sqrt(dmin)>65){ moveToward(near.x,near.y); return; }
+    // player hits
+    if(Math.random()<0.75){ let base=RI(6,10)+state.player.skills.Bash*2; if(p.buffs.provoke>0) base+=4; const dmg=dmgWithElement(base, state.player.element, near.element); near.hpCur-=dmg; spawnHit(near.x,near.y-20,dmg); }
+    // mob retaliate
+    if(Math.random()<0.5){ let md=RI(near.atk[0],near.atk[1]); if(p.buffs.guard>0) md=Math.floor(md*0.6); p.hp-=md; spawnBlood(p.x,p.y); if(p.hp<=0) death(); }
+    if(near.hpCur<=0){ onKill(near); state.targets=state.targets.filter(e=>e!==near); }
+    if(byId('optAOE').checked){ const need=+byId('aoeCnt').value||3; const count=state.targets.filter(t=>dist(t.x,t.y,p.x,p.y)<80).length; if(count>=need && state.player.skills.MagnumBreak>0){ skillDefs['MagnumBreak'].use(); }}
+  }
+
+  function onKill(m){ state.actQuests.forEach(q=>{ if(q.need.kill[m.name]){ q.progress.kill[m.name]=(q.progress.kill[m.name]|0)+1; }}); renderQuests(); addExp(12); if(Math.random()<0.2) state.player.knot+=1; (m.drop||[]).forEach(d=>{ if(Math.random()<d.ch){ const qty=RI(d.qty[0],d.qty[1]); for(let i=0;i<qty;i++){ state.drops.push({x:m.x+R(-6,6),y:m.y+R(-6,6),name:d.it}); } }}); showToast(`${m.name} defeated`); }
+  function addExp(v){ const p=state.player; p.exp+=v; if(p.exp>=p.expNext){ p.exp-=p.expNext; p.lv++; p.expNext=Math.floor(p.expNext*1.25); p.skillPts++; p.jobPts++; showToast('Level Up!'); } updHUD(); }
+  function death(){ const p=state.player; p.hp=p.hpMax; p.sp=p.spMax; p.x=cv.width/2; p.y=cv.height-40; showToast('You died. Respawned.'); log('Respawn at camp.'); }
+
+  // ===================== Projectiles / AOE =====================
+  function shootFire(){ const p=state.player; let target=null, dmin=1e9; state.targets.forEach(t=>{ const d=dist(p.x,p.y,t.x,t.y); if(d<dmin){dmin=d; target=t;} }); if(!target) return; const ang=Math.atan2(target.y-p.y, target.x-p.x); state.projectiles.push({x:p.x,y:p.y,vx:Math.cos(ang)*5,vy:Math.sin(ang)*5,dmg:14,el:EL.FIRE,t:120}); }
+  function stepProjectiles(){ for(let i=state.projectiles.length-1;i>=0;i--){ const pr=state.projectiles[i]; pr.x+=pr.vx; pr.y+=pr.vy; pr.t--; for(const m of state.targets){ if(dist(pr.x,pr.y,m.x,m.y)<14){ let dmg=dmgWithElement(pr.dmg, pr.el, m.element); m.hpCur-=dmg; spawnHit(m.x,m.y-20,dmg); state.projectiles.splice(i,1); if(m.hpCur<=0){ onKill(m); state.targets=state.targets.filter(e=>e!==m);} break; } } if(pr.t<=0) state.projectiles.splice(i,1); } }
+  function aoeBurst(x,y,rad){ state.targets.forEach(m=>{ if(dist(x,y,m.x,m.y)<rad/2){ const dmg=RI(10,16); m.hpCur-=dmg; spawnHit(m.x,m.y-20,dmg);} }); state.targets=state.targets.filter(m=>{ if(m.hpCur<=0){ onKill(m); return false;} return true;}); }
+
+  // ===================== Dungeon (simple telegraph example for Villa boss) =====================
+  function ensureDungeon(){ if(!state.dungeon){ state.dungeon={map:state.currentMap, active:false, boss:null, cleared:false}; } }
+  function createDungeon(){ ensureDungeon(); const bm=bosses[state.currentMap]||bosses.custom; const b=JSON.parse(JSON.stringify(bm)); b.x=cv.width*0.66; b.y=cv.height*0.48; b.hpCur=b.hp; state.dungeon.boss=b; state.dungeon.active=true; state.dungeon.cleared=false; log('Dungeon instance created.'); renderDg(); }
+  function enterDungeon(){ ensureDungeon(); if(!state.dungeon.active){ showToast('No dungeon. Create first.'); return;} loadMap(state.currentMap); state.targets.push(state.dungeon.boss); log('Entered dungeon. Boss spawned at Villa!'); renderDg(); }
+  function leaveDungeon(){ if(state.dungeon){ state.dungeon.active=false; log('Left dungeon.'); renderDg(); } }
+  function nextDungeonStep(){ /* simplified */ }
+  function bossTick(){ const b=state.dungeon?.boss; if(!b) return; if(state.targets.indexOf(b)===-1) return; if(Math.random()<0.02 && b.aoe){ aoeBurst(b.x,b.y,150); showToast('Guardian shockwave!'); } if(b.telegraph && Math.random()<0.02){ const zone={x:b.x+RI(-120,120),y:b.y+RI(-80,80),r:90,t:120}; state.telegraphs.push(zone); setTimeout(()=>{ aoeBurst(zone.x,zone.y,zone.r); state.telegraphs=state.telegraphs.filter(z=>z!==zone); },1000); showToast('Ground trembles!'); } }
+  function renderDg(){ const box=byId('dgInfo'); box.innerHTML=''; if(!state.dungeon){ box.innerHTML='<div>No instance.</div>'; return; } const d=state.dungeon; const s=document.createElement('div'); s.innerHTML=`<div>Map: ${state.currentMap}</div><div>Active: ${d.active}</div><div>Boss: ${d.boss?d.boss.name+' '+(d.boss.hpCur||d.boss.hp)+'/'+d.boss.hp:''}</div>`; box.appendChild(s); }
+
+  // ===================== Particles / FX =====================
+  function spawnHit(x,y,dmg=0){ state.particles.push({x,y,t:20,txt:dmg?(''+dmg):'HIT',col:'#fff'}); }
+  function spawnBlood(x,y){ state.particles.push({x,y,t:14,txt:'',col:'#f33',r:6}); }
+  function stepParticles(){ state.particles.forEach(p=>{ p.y-=0.6; p.t--; }); state.particles=state.particles.filter(p=>p.t>0); }
+
+  // ===================== Pickup =====================
+  function autoPickup(){ if(!byId('optPickup').checked) return; const p=state.player; state.drops=state.drops.filter(d=>{ const dx=d.x-p.x, dy=d.y-p.y; if(dx*dx+dy*dy<26*26){ addItem(d.name,1); showToast('Picked: '+d.name); return false;} return true; }); }
+
+  // ===================== NPC / Shop =====================
+  function nearNPC(){ const p=state.player; let best=null, dd=9999; state.npcs.forEach(n=>{ const d=(n.x-p.x)**2+(n.y-p.y)**2; if(d<dd){dd=d; best=n;} }); if(Math.sqrt(dd)<60) return best; return null; }
+  function talkNPC(){ const n=nearNPC(); const nameBox=byId('npcName'); const text=byId('npcText'); const btns=byId('npcBtns'); btns.innerHTML=''; if(!n){ nameBox.textContent='-'; text.textContent='Walk to an NPC to talk.'; return; } nameBox.textContent=n.name; if(n.type==='healer'){ text.textContent='I will heal you for free. Stay safe!'; const b=document.createElement('button'); b.textContent='Heal'; b.onclick=()=>{ state.player.hp=state.player.hpMax; state.player.sp=state.player.spMax; showToast('Healed!'); updHUD(); }; btns.appendChild(b);} if(n.type==='quest'){ text.textContent='I have tasks for you. Choose one:'; state.quests.forEach(q=>{ const b=document.createElement('button'); b.textContent=q.name; b.onclick=()=>acceptQuest(q); btns.appendChild(b); }); } if(n.type==='shop'){ text.textContent='Best prices in town!'; renderShop(); }
+  }
+  function renderShop(){ const box=byId('shopList'); box.innerHTML=''; state.shop.forEach(s=>{ const d=document.createElement('div'); d.className='item'; d.innerHTML=`<span>${s.name}</span><span class="row"><span class="price">${s.price}</span><button data-s="${s.id}" class="buyBtn">Buy</button></span>`; box.appendChild(d); }); }
+
+  // ===================== Auto Potion / Buff =====================
+  function tryPotion(){ if(!byId('optPotion').checked) return; const pct=+byId('potPct').value||50; if(state.player.hp/state.player.hpMax*100<=pct){ const idx=state.player.inv.findIndex(i=>i.name.includes('Potion')&&i.name.includes('Red')); if(idx>-1){ state.player.inv.splice(idx,1); state.player.hp=Math.min(state.player.hpMax,state.player.hp+35); log('Auto used Red Potion'); renderInv(); updHUD(); } }}
+  function autoBuff(){ if(state.player.sp<6) return; state.player.buffs.agi=20; state.player.buffs.bless=20; state.player.sp-=6; showToast('Buffed AGI & Bless'); updHUD(); }
+
+  // ===================== Input =====================
+  const keys={}; window.addEventListener('keydown',e=>{keys[e.key]=true; if(e.key===' '){ e.preventDefault(); attackNearest(); }}); window.addEventListener('keyup',e=>keys[e.key]=false);
+  function moveToward(x,y){ const p=state.player; const ang=Math.atan2(y-p.y,x-p.x); const spd=2.2*(1+(p.buffs.agi>0?0.6:0)); p.x+=Math.cos(ang)*spd; p.y+=Math.sin(ang)*spd; }
+  function dist(ax,ay,bx,by){ const dx=ax-bx, dy=ay-by; return Math.sqrt(dx*dx+dy*dy); }
+
+  // ===================== Party / Allies =====================
+  function addAlly(){ const names=['Luna','Ryo','Mina','Kato','Iris','Jin']; const el=[EL.FIRE,EL.WATER,EL.WIND,EL.EARTH][RI(0,3)]; const ally={name:names[RI(0,names.length-1)], hp:80, hpMax:80, atk:[6,10], element:el, x:state.player.x+RI(-30,30), y:state.player.y+RI(-30,30)}; state.allies.push(ally); renderParty(); updHUD(); showToast('Ally joined!'); }
+  function clearParty(){ state.allies=[]; renderParty(); updHUD(); showToast('Party cleared'); }
+  function renderParty(){ const box=byId('partyList'); box.innerHTML=''; state.allies.forEach((a,i)=>{ const d=document.createElement('div'); d.className='item'; d.innerHTML=`<span>${a.name} <span class="el ${a.element}"><span class="d"></span>${a.element}</span> ${a.hp}/${a.hpMax}</span><span><button data-i="${i}" class="kick">Kick</button></span>`; box.appendChild(d); }); }
+  function stepAllies(){ const form=byId('formation')?.value||'follow'; state.allies.forEach(a=>{ let tx=state.player.x, ty=state.player.y; if(form==='spread'){ tx+=RI(-100,100); ty+=RI(-60,60);} const ang=Math.atan2(ty-a.y,tx-a.x); const spd=2.0; if(dist(a.x,a.y,tx,ty)>20){ a.x+=Math.cos(ang)*spd; a.y+=Math.sin(ang)*spd; } let near=null, dmin=1e9; state.targets.forEach(t=>{ const d=(t.x-a.x)**2+(t.y-a.y)**2; if(d<dmin){dmin=d; near=t;} }); if(near && Math.sqrt(dmin)<70 && Math.random()<0.6){ const dmg=dmgWithElement(RI(a.atk[0],a.atk[1]), a.element, near.element); near.hpCur-=dmg; spawnHit(near.x,near.y-20,dmg); if(near.hpCur<=0){ onKill(near); state.targets=state.targets.filter(e=>e!==near);} }
+    }); }
+
+  // ===================== Game Loop =====================
+  function step(){ if(state.running && !state.paused){ const p=state.player; const spd=2.2*(1+(p.buffs.agi>0?0.6:0)); if(keys['ArrowLeft']) p.x-=spd; if(keys['ArrowRight']) p.x+=spd; if(keys['ArrowUp']) p.y-=spd; if(keys['ArrowDown']) p.y+=spd; p.x=Math.max(40,Math.min(cv.width-40,p.x)); p.y=Math.max(220,Math.min(cv.height-20,p.y)); ['agi','bless','guard','provoke'].forEach(k=>{ if(p.buffs[k]>0)p.buffs[k]-=1/60; }); attackNearest(); stepAllies(); autoPickup(); tryPotion(); if(byId('optQuest').checked) talkNPC(); if(Math.random()<state.perf.spawnRate) spawnMob(); const map=maps.find(x=>x.id===state.currentMap); (map.portals||[]).forEach(pt=>{ if(dist(p.x,p.y,pt.x,pt.y)<26){ loadMap(pt.to); p.x=pt.tx; p.y=pt.ty; }}); stepProjectiles(); bossTick(); } stepParticles(); }
+
+  function draw(){ // background image or color
+    const m=maps.find(x=>x.id===state.currentMap);
+    if(m.usesImage && bgImg && bgImg.complete){ cx.drawImage(bgImg,0,0,cv.width,cv.height); }
+    else { cx.fillStyle=m.color||'#223'; cx.fillRect(0,0,cv.width,cv.height); }
+
+    // grid overlay (faint)
+    cx.strokeStyle='rgba(255,255,255,.06)'; cx.beginPath(); for(let x=0;x<cv.width;x+=40){cx.moveTo(x,220);cx.lineTo(x,cv.height);} for(let y=220;y<=cv.height;y+=40){cx.moveTo(0,y);cx.lineTo(cv.width,y);} cx.stroke();
+
+    // Telegraph zones
+    state.telegraphs.forEach(z=>{ cx.fillStyle='rgba(255,0,0,.3)'; cx.beginPath(); cx.arc(z.x,z.y,z.r,0,Math.PI*2); cx.fill(); });
+
+    // NPCs
+    state.npcs.forEach(n=>{ cx.fillStyle='#ffd54f'; cx.fillRect(n.x-8,n.y-18,16,16); cx.fillStyle='#000'; cx.fillText(n.name, n.x-20, n.y-22); });
+
+    // drops
+    cx.fillStyle='#9cf'; state.drops.forEach(d=>{ cx.fillRect(d.x-3,d.y-3,6,6); });
+
+    // mobs / boss
+    state.targets.forEach(t=>{ cx.fillStyle='#e57373'; cx.fillRect(t.x-8,t.y-10,16,16); cx.fillStyle='#fff'; cx.fillText(`${t.name} ${t.hpCur}/${t.hp}`, t.x-28, t.y-16); });
+
+    // projectiles
+    cx.fillStyle='#ffa726'; state.projectiles.forEach(pr=>{ cx.beginPath(); cx.arc(pr.x,pr.y,3,0,Math.PI*2); cx.fill(); });
+
+    // allies
+    state.allies.forEach(a=>{ cx.fillStyle='#90caf9'; cx.fillRect(a.x-7,a.y-9,14,14); cx.fillStyle='#fff'; cx.fillText(a.name, a.x-14, a.y-14); });
+
+    // player
+    cx.fillStyle='#4fc3f7'; cx.fillRect(state.player.x-8,state.player.y-12,16,16); cx.fillStyle='#fff'; cx.fillText('YOU', state.player.x-10, state.player.y-18);
+
+    // particles
+    state.particles.forEach(p=>{ if(p.txt){ cx.fillStyle=p.col; cx.fillText(p.txt,p.x,p.y); } else { cx.fillStyle=p.col; cx.beginPath(); cx.arc(p.x,p.y,p.r||3,0,Math.PI*2); cx.fill(); } });
+
+    // mini-map uses same image
+    mx.clearRect(0,0,mini.width,mini.height); if(m.usesImage && bgImg && bgImg.complete){ mx.drawImage(bgImg,0,0,mini.width,mini.height); } else { mx.fillStyle='#123'; mx.fillRect(0,0,mini.width,mini.height); }
+    mx.fillStyle='#fff'; mx.fillText(m.name, 6, 12); const sx=mini.width/cv.width, sy=mini.height/cv.height; mx.fillStyle='#4fc3f7'; mx.fillRect(state.player.x*sx-2,state.player.y*sy-2,4,4); mx.fillStyle='#90caf9'; state.allies.forEach(a=> mx.fillRect(a.x*sx-2,a.y*sy-2,4,4)); mx.fillStyle='#e57373'; state.targets.forEach(t=> mx.fillRect(t.x*sx-2,t.y*sy-2,4,4)); mx.fillStyle='#ffd54f'; state.npcs.forEach(n=> mx.fillRect(n.x*sx-2,n.y*sy-2,4,4));
+
+    requestAnimationFrame(draw);
+  }
+
+  setInterval(step,1000/60); requestAnimationFrame(draw);
+
+  // ===================== UI Wiring =====================
+  function renderMapList(){ const box=byId('mapList'); box.innerHTML=''; maps.forEach(mp=>{ const d=document.createElement('div'); d.className='item'; const cur=(mp.id===state.currentMap)?' (current)':''; d.innerHTML=`<span>${mp.name}${cur}</span><button data-warp="${mp.id}">Warp</button>`; box.appendChild(d); }); }
+
+  byId('btnStart').onclick=()=>{state.running=true;state.paused=false;log('Bot started.');};
+  byId('btnPause').onclick=()=>{state.paused=!state.paused;log(state.paused?'Paused.':'Resumed.');};
+  byId('btnStop').onclick=()=>{state.running=false;log('Bot stopped.');};
+  byId('btnBuff').onclick=()=>autoBuff();
+  byId('btnHeal').onclick=()=>{state.player.hp=Math.min(state.player.hpMax,state.player.hp+35);updHUD();};
+  byId('btnDropAll').onclick=()=>{state.player.inv=[];renderInv();updHUD();};
+  byId('btnSellAll').onclick=()=>sellAllLoot();
+  byId('btnSellAll2').onclick=()=>sellAllLoot();
+  byId('btnAbandon').onclick=()=>abandonSelected();
+  byId('btnConnect').onclick=()=>connect();
+  byId('btnClaim').onclick=()=>claim();
+  byId('btnWarpTown').onclick=()=>{loadMap('custom');updHUD();};
+  byId('btnNewDungeon').onclick=()=>{createDungeon();};
+  byId('btnEnterDungeon').onclick=()=>{enterDungeon();};
+  byId('btnLeaveDungeon').onclick=()=>{leaveDungeon();};
+  byId('btnForceNext').onclick=()=>{nextDungeonStep();};
+  byId('btnSettings').onclick=()=>{showToast(`Spawn:${state.perf.spawnRate.toFixed(2)} MobCap:${state.perf.mobCap}`);};
+
+  byId('partyList').addEventListener('click',e=>{ if(e.target.className==='kick'){ const i=+e.target.dataset.i; state.allies.splice(i,1); renderParty(); updHUD(); }});
+  byId('btnAddAlly').onclick=()=>addAlly();
+  byId('btnClearParty').onclick=()=>clearParty();
+
+  byId('invList').addEventListener('click',e=>{ if(e.target.className==='useBtn'){ const i=+e.target.dataset.i; const it=state.player.inv[i]; if(!it) return; if(it.name==='Red Potion (S)'||it.name==='Red Potion (M)'){ state.player.hp=Math.min(state.player.hpMax,state.player.hp+(it.name.includes('(M)')?60:35)); state.player.inv.splice(i,1); updHUD(); renderInv(); } if(it.name==='Blue Potion (S)'){ state.player.sp=Math.min(state.player.spMax,state.player.sp+30); state.player.inv.splice(i,1); updHUD(); renderInv(); } } if(e.target.className==='dropBtn'){ const i=+e.target.dataset.i; state.player.inv.splice(i,1); renderInv(); updHUD(); }});
+
+  byId('skillTree').addEventListener('click',e=>{ if(e.target.className==='useSkill'){ onUseSkill(e.target.dataset.s); } if(e.target.hasAttribute('data-u')){ onUpgradeSkill(e.target.getAttribute('data-u')); }});
+
+  byId('shopList').addEventListener('click',e=>{ if(e.target.className==='buyBtn'){ const id=e.target.getAttribute('data-s'); const item=state.shop.find(s=>s.id===id); if(!item) return; if(state.player.gold<item.price){ showToast('Not enough gold'); return; } state.player.gold-=item.price; addItem(item.name,1); updHUD(); }});
+
+  byId('questList').addEventListener('click',e=>{ if(e.target.className==='submitBtn'){ const id=e.target.getAttribute('data-q'); const q=state.actQuests.find(x=>x.id===id); if(q) submitQuest(q); }});
+
+  byId('mapList').addEventListener('click',e=>{ if(e.target.hasAttribute('data-warp')){ loadMap(e.target.getAttribute('data-warp')); renderMapList(); }});
+
+  // Load external map image as base64
+  byId('btnLoadMapImg').onclick=()=>{
+    const f=byId('fileMap').files?.[0]; if(!f){ showToast('ยังไม่ได้เลือกไฟล์ภาพ'); return; }
+    const fr=new FileReader(); fr.onload=e=>{ const url=e.target.result; bgDataURL=url; localStorage.setItem('yglight_map_image', url); bgImg.src=url; showToast('Loaded custom map image'); };
+    fr.readAsDataURL(f);
+  };
+  byId('btnResetMapImg').onclick=()=>{ localStorage.removeItem('yglight_map_image'); bgDataURL=null; bgImg.src=''; showToast('Reset to color map'); };
+
+  // ===================== Drag windows =====================
+  document.querySelectorAll('.window').forEach(win=>{ const bar=win.querySelector('.title-bar'); let dx=0,dy=0,drag=false; bar.addEventListener('mousedown',ev=>{drag=true; dx=ev.clientX-win.offsetLeft; dy=ev.clientY-win.offsetTop;}); window.addEventListener('mouseup',()=>drag=false); window.addEventListener('mousemove',ev=>{ if(drag){ win.style.left=(ev.clientX-dx)+'px'; win.style.top=(ev.clientY-dy)+'px'; }}); });
+
+  // ===================== Save / Load =====================
+  function save(){ const data=JSON.stringify(state,(k,v)=>{ if(['particles','targets','drops','projectiles','telegraphs'].includes(k)) return undefined; return v;}); localStorage.setItem('yglight_save',data); showToast('Game saved'); }
+  function load(){ const s=localStorage.getItem('yglight_save'); if(!s){ showToast('No save found'); return; } const obj=JSON.parse(s); Object.assign(state,obj); state.targets=[]; state.drops=[]; state.particles=[]; state.projectiles=[]; state.telegraphs=[]; renderInv(); renderShop(); renderSkillTree(); renderNFTs(); renderMapList(); updHUD(); talkNPC(); renderDg(); renderParty(); showToast('Loaded'); }
+  function newGame(){ localStorage.removeItem('yglight_save'); location.reload(); }
+  byId('btnSave').onclick=()=>save(); byId('btnLoad').onclick=()=>load(); byId('btnNew').onclick=()=>newGame(); setInterval(()=>save(),60000);
+
+  // ===================== Init =====================
+  function renderMkt(){ const c=byId('mktList'); c.innerHTML=''; }
+  function init(){ loadMap('custom'); renderInv(); renderShop(); renderSkillTree(); renderNFTs(); renderMkt(); renderMapList(); renderParty(); updHUD(); talkNPC(); renderDg(); if(bgDataURL) log('Custom map image loaded from storage.'); }
+  init();
+  </script></body>
+</html>
