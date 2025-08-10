@@ -1,0 +1,369 @@
+<!DOCTYPE html><html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>YG Light – Mobile/Web Bot (v6.2 Calibrated + Path Overlay)</title>
+<style>
+:root{--bg:#0b1020;--panel:#11172a;--accent:#3aa0ff;--text:#e8efff;--muted:#9fb1d5;--hp:#ff5353;--mp:#59aaff;--xp:#a2ff7a;--good:#2ec27e;--bad:#ff5e57;--warn:#ffb020}
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:radial-gradient(1200px 800px at 50% -20%, #17233f 0%, #0b1020 50%, #06080f 100%);color:var(--text);font-family:Tahoma,system-ui,Segoe UI,Arial,sans-serif}
+#app{position:relative;min-height:100dvh;padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+#stage{position:relative;height:65vh;max-height:820px;min-height:360px;padding:8px}
+#mapCanvas{width:100%;height:100%;display:block;background:#0e152b;border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.04) inset}
+#minimap{position:absolute;right:16px;top:16px;width:160px;height:100px;background:#0a1226;border-radius:8px;border:1px solid rgba(255,255,255,.1)}
+#hudTop{position:absolute;left:16px;top:16px;display:grid;gap:8px;min-width:220px}
+.bar{height:12px;background:#0b1328;border:1px solid rgba(255,255,255,.08);border-radius:999px;position:relative;overflow:hidden}.bar>span{position:absolute;left:0;top:0;bottom:0;border-radius:999px}
+.bar.hp>span{background:linear-gradient(90deg,#ff9e9e,#ff5353)}.bar.mp>span{background:linear-gradient(90deg,#a5d3ff,#59aaff)}.bar.xp>span{background:linear-gradient(90deg,#ccffb2,#a2ff7a)}
+.badge{display:inline-block;background:#173768;color:#aee0ff;border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:2px 8px;font-size:12px}
+.money{font-weight:700;color:#ffe27a}
+#menuBtn,#skinBtn{border:1px solid rgba(255,255,255,.12);background:#0e1631;border-radius:10px;color:#cfe6ff;padding:8px 12px}
+#fabStart{position:absolute;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#24d27b,#18a55e);color:#061;box-shadow:0 10px 24px rgba(0,0,0,.35);border:0;font-size:14px;font-weight:800}
+#fabStart.stop{background:linear-gradient(180deg,#ff6767,#e14444);color:#300}
+#joy{position:fixed;left:16px;bottom:calc(130px + env(safe-area-inset-bottom));width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.04);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.08)}
+#joy .knob{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18)}
+#actions{position:fixed;right:16px;bottom:calc(12px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,72px);grid-auto-rows:72px;gap:10px}
+.abtn{border:0;border-radius:16px;background:linear-gradient(180deg,#1b2546,#0e1631);box-shadow:0 6px 16px rgba(0,0,0,.35);color:#e8efff;font-weight:800;font-size:16px;display:grid;place-items:center}
+.abtn.small{font-size:14px}
+#bottom{position:fixed;left:0;right:0;bottom:0;padding:8px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:linear-gradient(180deg,rgba(8,12,24,.12),rgba(8,12,24,.5));backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.08)}
+.sel,.toggle,.btn{appearance:none;border:1px solid rgba(255,255,255,.12);background:#0f1631;color:#e8efff;border-radius:12px;padding:8px 10px;font-size:14px}
+.btn{cursor:pointer}
+.toggle{display:flex;gap:8px;align-items:center}
+#overlay{position:fixed;inset:0;background:rgba(2,6,14,.65);backdrop-filter:blur(10px);display:none}#overlay.show{display:block}
+#panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1000px,94vw);max-height:82vh;overflow:auto;background:#0c132a;border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+#panel .tabs{display:flex;gap:4px;padding:10px;border-bottom:1px solid rgba(255,255,255,.08);background:#0b1226;position:sticky;top:0}
+.tab{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:#0f1835;font-size:14px}.tab.active{background:#16224a;color:#7cf;border-color:#2b3e79}
+.tpage{display:none;padding:12px}.tpage.active{display:block}
+.table{width:100%;border-collapse:collapse;font-size:14px}.table th,.table td{border-bottom:1px solid rgba(255,255,255,.08);padding:8px;text-align:left}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.grow{flex:1}
+/* Classic skin */
+body[data-skin="classic"]{background:#d4d0c8;color:#111;font-family:Tahoma,Arial,sans-serif}
+body[data-skin="classic"] #mapCanvas{background:#ffffff;border-radius:4px;box-shadow:none;border:2px solid #808080;border-top-color:#fff;border-left-color:#fff}
+body[data-skin="classic"] #minimap{background:#fff;border:1px solid #777;border-radius:2px}
+body[data-skin="classic"] #overlay{background:rgba(0,0,0,.35)}
+body[data-skin="classic"] #panel{background:#fff;border:2px solid #808080;border-top-color:#fff;border-left-color:#fff;border-radius:4px;color:#111}
+body[data-skin="classic"] #panel .tabs{background:#e8f0fb;border-bottom:1px solid #7f9db9}
+body[data-skin="classic"] .tab{background:#fff;border:1px solid #7f9db9;color:#003}
+body[data-skin="classic"] .tab.active{background:#ffffe0;color:#000;border-color:#7f9db9}
+body[data-skin="classic"] #bottom{background:#ece9d8;border-top:2px groove #fff;color:#111}
+body[data-skin="classic"] .sel, body[data-skin="classic"] .toggle, body[data-skin="classic"] .btn{background:#fff;color:#000;border:1px solid #7f9db9}
+body[data-skin="classic"] #fabStart{border-radius:6px;width:auto;height:auto;padding:8px 12px;box-shadow:none;background:#ece9d8;border:2px solid #808080;border-top-color:#fff;border-left-color:#fff;color:#111}
+body[data-skin="classic"] #fabStart.stop{background:#ffd7d7}
+body[data-skin="classic"] #menuBtn, body[data-skin="classic"] #skinBtn{background:#ece9d8;border:2px solid #808080;border-top-color:#fff;border-left-color:#fff;border-radius:4px;color:#111}
+body[data-skin="classic"] .abtn{background:#ece9d8;border:2px solid #808080;border-top-color:#fff;border-left-color:#fff;color:#111}
+body[data-skin="classic"] .badge{background:#e8f0fb;border:1px solid #7f9db9;color:#003}
+body[data-skin="classic"] .bar{background:#fff;border:1px solid #7f9db9}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="mapCanvas"></canvas>
+    <canvas id="minimap"></canvas>
+    <div id="hudTop">
+      <div class="row" id="hudInfo">
+        <span class="badge">Lv <b id="lv">1</b></span>
+        <span class="badge">ชื่อ <b id="pname">-</b></span>
+        <span class="badge money">Z <b id="money">0</b></span>
+      </div>
+      <div class="bar hp"><span id="hpbar" style="width:50%"></span></div>
+      <div class="bar mp"><span id="mpbar" style="width:50%"></span></div>
+      <div class="bar xp"><span id="xpbar" style="width:5%"></span></div>
+    </div>
+    <button id="menuBtn">☰ เมนู</button>
+    <button id="skinBtn" style="position:absolute;right:96px;top:16px">🎨 สกิน</button>
+    <button id="fabStart">START</button>
+  </div>  <div id="bottom">
+    <select class="sel" id="server"></select>
+    <select class="sel" id="mapSelect"></select>
+    <label class="toggle"><input type="checkbox" id="patrol"> Patrol</label>
+    <label class="toggle"><input type="checkbox" id="autoSell"> Auto-Sell</label>
+    <label class="toggle"><input type="checkbox" id="autoAtk" checked> Auto-Attack</label>
+    <label class="toggle"><input type="checkbox" id="showTrail" checked> Path Overlay</label>
+    <div class="grow"></div>
+    <label class="toggle"><input type="checkbox" id="sfx" checked> 🔈</label>
+    <label class="toggle"><input type="file" id="mapImage" accept="image/*"> โหลดรูปแมพ</label>
+    <button class="btn" id="btnCalibrate">คาลิเบรตพิกัด</button>
+  </div>  <div id="joy"><div class="knob"></div></div>
+  <div id="actions">
+    <button class="abtn" data-skill="1">1</button>
+    <button class="abtn" data-skill="2">2</button>
+    <button class="abtn" data-skill="3">3</button>
+    <button class="abtn" data-skill="4">4</button>
+    <button class="abtn" data-skill="5">5</button>
+    <button class="abtn small" data-item="red">Q</button>
+    <button class="abtn small" data-item="blue">E</button>
+  </div>
+</div><div id="overlay">
+  <div id="panel">
+    <div class="tabs">
+      <button class="tab active" data-t="t-status">สถานะ</button>
+      <button class="tab" data-t="t-inv">กระเป๋า</button>
+      <button class="tab" data-t="t-skill">สกิลทรี</button>
+      <button class="tab" data-t="t-quests">เควส</button>
+      <button class="tab" data-t="t-shop">ร้านค้า</button>
+      <button class="tab" data-t="t-save">บันทึก</button>
+      <div class="grow"></div>
+      <button class="tab" id="btnClose">ปิด</button>
+    </div><section id="t-status" class="tpage active">
+  <div class="row"><div class="badge">STR <b id="stSTR">3</b></div><div class="badge">AGI <b id="stAGI">3</b></div><div class="badge">DEX <b id="stDEX">2</b></div><div class="badge">VIT <b id="stVIT">3</b></div><div class="badge">SP <b id="spLeft">0</b></div></div>
+  <div class="row" style="margin-top:8px">
+    <label>Aggro</label><input type="range" min="80" max="360" value="180" id="aggro"> <span id="aggroVal" class="badge">180</span>
+    <label>Loot</label><input type="range" min="20" max="200" value="80" id="loot"> <span id="lootVal" class="badge">80</span>
+    <label>HP%</label><input type="range" min="5" max="90" value="35" id="hpTh"> <span id="hpThVal" class="badge">35%</span>
+    <label>MP%</label><input type="range" min="0" max="80" value="20" id="mpTh"> <span id="mpThVal" class="badge">20%</span>
+    <label class="toggle"><input type="checkbox" id="autoPotion" checked> Auto-Potion</label>
+  </div>
+</section>
+
+<section id="t-inv" class="tpage">
+  <table class="table"><thead><tr><th>#</th><th>ไอเทม</th><th>แรร์</th><th>จำนวน</th></tr></thead><tbody id="tblInv"></tbody></table>
+</section>
+
+<section id="t-skill" class="tpage">
+  <div class="row">
+    <div class="badge">Power Lv <b id="stPower">0</b> <button id="upPower">อัป</button></div>
+    <div class="badge">Vitality Lv <b id="stVita">0</b> <button id="upVita">อัป</button></div>
+    <div class="badge">Agility Lv <b id="stAgil">0</b> <button id="upAgil">อัป</button></div>
+    <div class="badge">Crit Lv <b id="stCrit">0</b> <button id="upCrit">อัป</button></div>
+  </div>
+</section>
+
+<section id="t-quests" class="tpage"><div id="questBox">ยังไม่มีภารกิจ</div></section>
+<section id="t-shop" class="tpage">
+  <div class="row"><button id="openShop">เปิดร้าน NPC ใกล้ตัว</button><div class="badge">Zeny: <b id="shopZ">0</b></div></div>
+  <div class="row" style="opacity:.7">* เดินไปใกล้ NPC พ่อค้าเพื่อเปิดร้านอัตโนมัติ</div>
+</section>
+<section id="t-save" class="tpage">
+  <div class="row" style="margin-bottom:8px"><button id="btnExport">ส่งออก</button><button id="btnImport">นำเข้า</button></div>
+  <textarea id="ioBox" rows="6" style="width:100%" placeholder='วาง JSON ที่นี่...'></textarea>
+</section>
+
+  </div>
+</div><script>
+/* ============== v6.2: Calibration + Smooth Path Overlay ============== */
+const $=(q,root=document)=>root.querySelector(q);const $$=(q,root=document)=>[...root.querySelectorAll(q)];const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+let audioCtx=null;function beep(freq=880,ms=90){if(!$('#sfx').checked)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.type='sine';o.frequency.value=freq;o.connect(g);g.connect(audioCtx.destination);g.gain.value=0.05;o.start();setTimeout(()=>o.stop(),ms)}catch(_){} }
+
+/* ---- Assets: multi-map + normalized Central Valley ---- */
+const RATES={r1:{exp:1,drop:1,respawn:1}, r2:{exp:1.4,drop:1.2,respawn:0.8}, r3:{exp:2,drop:1.6,respawn:0.6}};
+// Normalized (0..1) layout for exact calibration to any image size
+const CENTRAL_VALLEY_NORM={
+  labels:[
+    {name:'Advance Party Camp',x:.22,y:.1},
+    {name:'Shrine',x:.12,y:.39},
+    {name:'Riverside Plains',x:.18,y:.57},
+    {name:'Pirate Branch',x:.18,y:.80},
+    {name:'Lord Banes Villa',x:.68,y:.45},
+    {name:'Hill Valley',x:.90,y:.46},
+    {name:'Ruined Farm',x:.86,y:.25},
+    {name:"Bandits' Lair",x:.86,y:.84}
+  ],
+  npcs:[
+    {id:1,name:'พ่อค้า (Camp)',role:'Shop',x:.20,y:.14},
+    {id:2,name:'คนส่งเควส (Shrine)',role:'Quest',x:.12,y:.42},
+    {id:3,name:'Gate → Hill Valley',role:'Gate',x:.93,y:.47,to:'Hill Valley'},
+    {id:4,name:'Gate → Riverside',role:'Gate',x:.14,y:.58,to:'Riverside Plains'},
+    {id:5,name:'ผู้ดูแล Villa',role:'Shop',x:.68,y:.48}
+  ],
+  spawns:[
+    {x:.18,y:.60,r:.10}, {x:.20,y:.80,r:.11}, {x:.86,y:.83,r:.12}, {x:.86,y:.26,r:.10}, {x:.70,y:.46,r:.13}
+  ],
+  obstacles:[
+    {x:.50,y:.32,w:.12,h:.05},{x:.52,y:.55,w:.11,h:.06},{x:.37,y:.70,w:.15,h:.06}
+  ],
+  entry:{x:.22,y:.80}
+};
+
+const MAPS=[
+  {name:'Central Valley', size:{w:1200,h:800}, texture:null, norm:CENTRAL_VALLEY_NORM},
+  {name:'Hill Valley', size:{w:1200,h:800}, texture:null},
+  {name:'Riverside Plains', size:{w:1200,h:800}, texture:null}
+];
+const ZONE_MON={
+  'Central Valley':['สไลม์','หมูป่า','งูเขียว','โครงกระดูก','กระต่ายป่า'],
+  'Hill Valley':['ค้างคาว','โกเลมหิน','วัวป่า'],
+  'Riverside Plains':['ปลิงน้ำ','โจรแม่น้ำ','คนแบกแพ']
+};
+
+/* ---- State ---- */
+const KEY='yg_v62';
+function defaults(){return{server:'r1',rates:RATES.r1,map:MAPS[0],player:{id:1,name:'เทพทางป',lv:1,exp:0,next:120,hp:140,hpMax:140,mp:60,mpMax:60,x:260,y:700,spd:1.7,str:3,agi:3,dex:2,vit:3,crit:5,dodge:5,sp:0,buff:{atk:0,spd:0,t:0}},mons:[],spawns:[],obstacles:[],npcs:[],labels:[],grid:null,inv:[],zeny:0,kills:0,loots:0,running:false,route:[],trail:[],tick:0,ui:{skin:'mobile'}}}
+let S=JSON.parse(localStorage.getItem(KEY)||'null')||defaults();
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+
+/* ---- Canvas ---- */
+const map=$('#mapCanvas'),ctx=map.getContext('2d');const mini=$('#minimap'),mctx=mini.getContext('2d');let TEX=null;function setTexture(img){TEX=img;draw()}
+function resize(){const r=$('#stage').getBoundingClientRect();map.width=r.width-16;map.height=r.height-16;mini.width=160;mini.height=100;draw()}addEventListener('resize',resize);setTimeout(resize,60);
+function w2s(x,y){return{x:x*(map.width/S.map.size.w),y:y*(map.height/S.map.size.h)}}
+
+/* ---- Grid & Pathfinding ---- */
+function buildGrid(){const cell=20;const w=Math.ceil(S.map.size.w/cell),h=Math.ceil(S.map.size.h/cell);const g=new Array(w*h).fill(0);for(const o of S.obstacles){const x0=Math.floor(o.x/cell),x1=Math.ceil((o.x+o.w)/cell);const y0=Math.floor(o.y/cell),y1=Math.ceil((o.y+o.h)/cell);for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)g[y*w+x]=1}S.grid={cell,w,h,data:g}}
+const nk=(x,y)=>y*S.grid.w+x;const pass=(x,y)=>x>=0&&y>=0&&x<S.grid.w&&y<S.grid.h&&S.grid.data[nk(x,y)]===0;
+function astar(sx,sy,tx,ty){const c=S.grid.cell;sx=Math.floor(sx/c);sy=Math.floor(sy/c);tx=Math.floor(tx/c);ty=Math.floor(ty/c);const open=new Set(),came={},g={},f={},pq=[];const h=(x,y)=>Math.hypot(x-tx,y-ty);const push=(x,y)=>{const k=nk(x,y);open.add(k);if(!(k in g))g[k]=1e9;f[k]=g[k]+h(x,y);pq.push([f[k],x,y])};push(sx,sy);g[nk(sx,sy)]=0;f[nk(sx,sy)]=h(sx,sy);const dirs=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,Math.SQRT2],[1,-1,Math.SQRT2],[-1,1,Math.SQRT2],[-1,-1,Math.SQRT2]];while(pq.length){pq.sort((a,b)=>a[0]-b[0]);const[_,x,y]=pq.shift();const k=nk(x,y);if(x===tx&&y===ty){const path=[];let cur=k,cx=x,cy=y;while(came[cur]){const[px,py]=came[cur];path.push({x:(cx+0.5)*c,y:(cy+0.5)*c});cx=px;cy=py;cur=nk(cx,cy)}return path.reverse()}open.delete(k);for(const[dx,dy,cost]of dirs){const nx=x+dx,ny=y+dy;if(!pass(nx,ny))continue;if(dx&&dy&&(!pass(x+dx,y)||!pass(x,y+dy)))continue;const nk2=nk(nx,ny);const t=(g[k]??1e9)+cost;if(t<(g[nk2]??1e9)){came[nk2]=[x,y];g[nk2]=t;f[nk2]=t+h(nx,ny);pq.push([f[nk2],nx,ny])}}}return[]}
+function lineRect(x1,y1,x2,y2,r){const steps=24;for(let i=0;i<=steps;i++){const t=i/steps,x=x1+(x2-x1)*t,y=y1+(y2-y1)*t;if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h)return true}return false}
+function needPathTo(x,y){for(const r of S.obstacles){if(lineRect(S.player.x,S.player.y,x,y,r))return true}return false}
+function routeTo(x,y){S.route=needPathTo(x,y)?astar(S.player.x,S.player.y,x,y):[{x,y}];}
+
+/* ---- Smooth Path Overlay (Catmull–Rom -> poly) + Trail ---- */
+function smoothPath(path){if(path.length<3) return path.slice(); const pts=path.map(p=>({x:p.x,y:p.y})); const res=[]; for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||p2; for(let t=0;t<1;t+=0.25){const t2=t*t,t3=t2*t; const x=0.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3); const y=0.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3); res.push({x,y}); } } res.push(pts.at(-1)); return res; }
+
+/* ---- Drawing ---- */
+function draw(){ctx.clearRect(0,0,map.width,map.height); if(TEX){ctx.drawImage(TEX,0,0,TEX.width,TEX.height,0,0,map.width,map.height)} else {ctx.fillStyle='#0b1226';ctx.fillRect(0,0,map.width,map.height)}
+ // obstacles
+ ctx.fillStyle='rgba(255,255,255,.06)'; for(const o of S.obstacles){const a=w2s(o.x,o.y);ctx.fillRect(a.x,a.y,o.w*(map.width/S.map.size.w),o.h*(map.height/S.map.size.h))}
+ // spawns
+ ctx.strokeStyle='rgba(82,190,128,.28)'; for(const sp of S.spawns){const a=w2s(sp.x,sp.y);ctx.beginPath();ctx.arc(a.x,a.y,sp.r*(map.width/S.map.size.w),0,Math.PI*2);ctx.stroke()}
+ // labels
+ ctx.fillStyle='rgba(0,0,0,.55)'; ctx.font='bold 16px Tahoma'; ctx.textBaseline='top'; for(const L of S.labels){const p=w2s(L.x,L.y);ctx.fillText(L.name,p.x+1,p.y+1);ctx.fillStyle='#fff7a0';ctx.fillText(L.name,p.x,p.y);ctx.fillStyle='rgba(0,0,0,.55)'}
+ // smoothed route overlay
+ if(S.route.length){ const spath=smoothPath(S.route); ctx.strokeStyle='rgba(58,160,255,.8)'; ctx.lineWidth=3; ctx.beginPath(); let a=w2s(S.player.x,S.player.y); ctx.moveTo(a.x,a.y); for(const p of spath){a=w2s(p.x,p.y); ctx.lineTo(a.x,a.y);} ctx.stroke(); ctx.lineWidth=1; }
+ // breadcrumb trail
+ if($('#showTrail').checked && S.trail.length>3){ ctx.strokeStyle='rgba(255,255,255,.28)'; ctx.beginPath(); let a=w2s(S.trail[0].x,S.trail[0].y); ctx.moveTo(a.x,a.y); for(const t of S.trail){a=w2s(t.x,t.y); ctx.lineTo(a.x,a.y)} ctx.stroke(); }
+ // NPC
+ for(const n of S.npcs){ const a=w2s(n.x,n.y); ctx.fillStyle=n.role==='Gate'?'#ffc107':(n.role==='Shop'?'#0dcaf0':'#b6c2ff'); ctx.beginPath(); ctx.arc(a.x,a.y,6,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#000'; ctx.font='11px Tahoma'; ctx.fillText(n.name,a.x+8,a.y-8); }
+ // Monsters
+ for(const m of S.mons){ const a=w2s(m.x,m.y); ctx.fillStyle=m.hp>0?'#ff6b6b':'#6c7a91'; ctx.beginPath(); ctx.arc(a.x,a.y,5,0,Math.PI*2); ctx.fill(); }
+ // Player
+ const p=w2s(S.player.x,S.player.y); ctx.fillStyle='#7cf'; ctx.beginPath(); ctx.arc(p.x,p.y,7,0,Math.PI*2); ctx.fill();
+ // minimap
+ const w=mini.width,h=mini.height; const sx=w/S.map.size.w, sy=h/S.map.size.h; mctx.clearRect(0,0,w,h); if(TEX){mctx.drawImage(TEX,0,0,TEX.width,TEX.height,0,0,w,h)} else {mctx.fillStyle='#0b1226'; mctx.fillRect(0,0,w,h)}; const dot=(x,y,c)=>{mctx.fillStyle=c; mctx.fillRect(x*sx-1,y*sy-1,3,3)}; for(const o of S.obstacles){mctx.fillStyle='rgba(255,255,255,.08)'; mctx.fillRect(o.x*sx,o.y*sy,o.w*sx,o.h*sy)} for(const sp of S.spawns){mctx.strokeStyle='rgba(82,190,128,.25)'; mctx.beginPath(); mctx.arc(sp.x*sx,sp.y*sy,sp.r*sx,0,Math.PI*2); mctx.stroke()} for(const m of S.mons) dot(m.x,m.y,'#ff6b6b'); for(const n of S.npcs) dot(n.x,n.y,n.role==='Gate'?'#ffc107':'#b6c2ff'); dot(S.player.x,S.player.y,'#7cf'); }
+
+/* ---- Inventory ---- */
+const ICON={red:'🧪',blue:'🔮',horn:'🦌',hide:'🧥',tooth:'🦷',fang:'🦴',gem:'💎',ore:'⛏️'};const NAME=id=>({horn:'เขากระทิง',hide:'หนังสัตว์',tooth:'เขี้ยวสั้น',fang:'กระดูกงู',red:'ยาแดง',blue:'ยาฟ้า',gem:'คริสตัล',ore:'แร่หยาบ'})[id]||id;
+function addItem(id,qty,rare=false){const it=S.inv.find(i=>i.id===id&&!!i.rare===!!rare);if(it)it.qty+=qty;else S.inv.push({id,qty,rare});renderInv();save()}
+function useItem(id){const it=S.inv.find(i=>i.id===id&&i.qty>0);if(!it)return;if(id==='red'){it.qty--;S.player.hp=Math.min(S.player.hpMax,S.player.hp+45)}if(id==='blue'){it.qty--;S.player.mp=Math.min(S.player.mpMax,S.player.mp+35)}if(it.qty<=0)S.inv=S.inv.filter(i=>i.qty>0);renderInv();updateHUD();save()}
+function renderInv(){const tb=$('#tblInv');tb.innerHTML='';S.inv.forEach((it,i)=>tb.insertAdjacentHTML('beforeend',`<tr><td>${i+1}</td><td>${ICON[it.id]||'📦'} ${NAME(it.id)}</td><td>${it.rare?'Rare':'Common'}</td><td>${it.qty}</td></tr>`))}
+
+/* ---- HUD ---- */
+function updateHUD(){$('#pname').textContent=S.player.name;$('#lv').textContent=S.player.lv;$('#money').textContent=S.zeny;$('#hpbar').style.width=(100*S.player.hp/S.player.hpMax)+'%';$('#mpbar').style.width=(100*S.player.mp/S.player.mpMax)+'%';$('#xpbar').style.width=(100*S.player.exp/S.player.next)+'%';$('#shopZ').textContent=S.zeny;$('#aggroVal').textContent=$('#aggro').value;$('#lootVal').textContent=$('#loot').value;$('#hpThVal').textContent=$('#hpTh').value+'%';$('#mpThVal').textContent=$('#mpTh').value+'%';$('#mapSelect').value=S.map.name;$('#server').value=S.server}
+
+/* ---- Monsters / Combat ---- */
+function randInCircle(cx,cy,r){const t=Math.random()*Math.PI*2;const rr=Math.sqrt(Math.random())*r;return{x:cx+Math.cos(t)*rr,y:cy+Math.sin(t)*rr}}
+function spawnMonsters(n=24){S.mons.length=0;let id=100;const pool=ZONE_MON[S.map.name]||ZONE_MON['Central Valley'];for(let i=0;i<n;i++){const s=S.spawns[~~(Math.random()*S.spawns.length)];const pos=randInCircle(s.x,s.y,s.r);const type=pool[~~(Math.random()*pool.length)];const rare=Math.random()<0.12;const base=type==='โกเลมหิน'?160:130;S.mons.push({id:id++,name:type,hp:60+~~(Math.random()*70),hpMax:base,exp:(10+~~(Math.random()*10))*S.rates.exp,z:5+~~(Math.random()*15),rare,x:pos.x,y:pos.y,respawn:~~(500+Math.random()*300)})}}
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);let target=null;let cd={p:0,b:0,d:0,h:0,w:0};
+function chooseTarget(){const p=S.player;const c=S.mons.filter(m=>m.hp>0&&dist(p,m)<=($('#aggro').value|0));if(!c.length)return null;c.sort((a,b)=>dist(p,a)-dist(p,b));return c[0]}
+function attack(){
+  // attack whenever running OR auto-attack is enabled
+  if(!(S.running || ($('#autoAtk')?.checked)) || !target) return;
+  const d=dist(S.player,target);
+  if(d<=26 && target.hp>0){
+    if(S.tick%16===0){
+      // hit check
+      if(Math.random()*100>(75+S.player.dex*3)) return;
+      const crit=Math.random()*100<=(S.player.crit||5);
+      let dmg=~~(S.player.str+(S.player.buff.atk?S.player.str*S.player.buff.atk:0)+Math.random()*6);
+      if(crit) dmg=~~(dmg*1.7);
+      target.hp=Math.max(0,target.hp-dmg);
+      if(target.hp<=0){ onKill(target); target.respawn=~~((600+Math.random()*300)*S.rates.respawn); target=null; }
+      updateHUD();
+    }
+  }
+}updateHUD()}}}
+function onKill(m){S.kills++;S.player.exp+=m.exp;S.zeny+=m.z;if(Math.random()<(0.22*S.rates.drop)){const pool=['horn','hide','tooth','red','blue','gem'];const id=pool[~~(Math.random()*pool.length)];addItem(id,1,id==='gem');S.loots++}if(S.player.exp>=S.player.next){S.player.exp-=S.player.next;S.player.lv++;S.player.sp++;S.player.next=Math.round(S.player.next*1.25);S.player.hpMax+=12;S.player.hp=S.player.hpMax;S.player.str++;S.player.agi++;beep(1320,160)}save()}
+function tickSkills(){Object.keys(cd).forEach(k=>{if(cd[k]>0)cd[k]--});if(S.player.buff.t>0)S.player.buff.t--}
+function power(){if(cd.p>0)return;cd.p=5*60;S.player.str+=4;setTimeout(()=>S.player.str-=4,2000);beep(980,100)}
+function buff(){if(cd.b>0)return;cd.b=22*60;S.player.buff={atk:0.25,spd:0.25,t:20*60};beep(720,100)}
+function dash(){if(cd.d>0)return;cd.d=12*60;S.player.spd+=1.2;setTimeout(()=>S.player.spd-=1.2,2000);beep(840,90)}
+function heal(){if(cd.h>0||S.player.mp<10)return;cd.h=10*60;S.player.mp-=10;S.player.hp=Math.min(S.player.hpMax,S.player.hp+30);updateHUD();beep(520,100)}
+function whirl(){if(cd.w>0||S.player.mp<12)return;cd.w=10*60;S.player.mp-=12;let hit=0;for(const m of S.mons){if(m.hp>0&&dist(S.player,m)<=38){const dmg=6+S.player.str+(S.player.buff.atk?S.player.str*S.player.buff.atk:0);m.hp=Math.max(0,m.hp-~~(dmg));hit++;if(m.hp<=0)onKill(m)}}if(hit)beep(460,90);updateHUD()}
+
+/* ---- Calibration helpers ---- */
+function applyNormalized(def,w,h){ // convert norm data to absolute
+  S.labels=(def.labels||[]).map(a=>({name:a.name,x:a.x*w,y:a.y*h}));
+  S.npcs=(def.npcs||[]).map(a=>({id:a.id,name:a.name,role:a.role,x:a.x*w,y:a.y*h,to:a.to}));
+  S.spawns=(def.spawns||[]).map(a=>({x:a.x*w,y:a.y*h,r:a.r*Math.max(w,h)}));
+  S.obstacles=(def.obstacles||[]).map(a=>({x:a.x*w,y:a.y*h,w:a.w*w,h:a.h*h}));
+  const entry=def.entry||{x:.22,y:.80}; S.player.x=entry.x*w; S.player.y=entry.y*h;
+}
+function calibrateToTexture(){ if(!TEX){alert('กรุณาโหลดภาพแผนที่ก่อน');return;} const w=TEX.naturalWidth||TEX.width; const h=TEX.naturalHeight||TEX.height; S.map.size={w,h}; // apply norm dataset of Central Valley
+  applyNormalized(CENTRAL_VALLEY_NORM,w,h); buildGrid(); spawnMonsters(26); draw(); updateHUD(); save(); }
+
+/* ---- Map management ---- */
+function setMap(m){S.map={name:m.name,size:m.size}; S.labels=structuredClone(m.labels||[]); S.obstacles=structuredClone(m.obstacles||[]); S.spawns=structuredClone(m.spawns||[]); S.npcs=structuredClone(m.npcs||[]); buildGrid(); spawnMonsters(24); draw(); save(); }
+function loadMapByName(name,fromName){const m=MAPS.find(x=>x.name===name)||MAPS[0]; setMap(m); if(name==='Central Valley' && TEX){ // if calibrated texture exists, re-apply norm to current size
+    calibrateToTexture();
+  } else if(fromName){ const backGate=m.npcs?.find(n=>n.role==='Gate'&&n.to===fromName); if(backGate){S.player.x=backGate.x+20;S.player.y=backGate.y;} }
+  updateHUD(); }
+
+/* ---- Controls & Events ---- */
+$('#menuBtn').onclick=()=>$('#overlay').classList.add('show'); $('#btnClose').onclick=()=>$('#overlay').classList.remove('show');
+$$('#panel .tab').forEach(b=>b.onclick=()=>{if(b.id==='btnClose')return;const id=b.dataset.t; $$('#panel .tab').forEach(x=>x.classList.toggle('active',x===b)); $$('#panel .tpage').forEach(p=>p.classList.toggle('active',p.id===id));});
+$('#skinBtn').onclick=()=>{S.ui.skin=S.ui.skin==='mobile'?'classic':'mobile';document.body.dataset.skin=S.ui.skin;save()};
+
+// dropdowns
+const serverSel=$('#server'); serverSel.innerHTML=['r1','r2','r3'].map(k=>`<option value="${k}">${k.toUpperCase()}</option>`).join(''); serverSel.value=S.server; serverSel.onchange=e=>{S.server=e.target.value;S.rates=RATES[S.server];save()};
+const mapSel=$('#mapSelect'); mapSel.innerHTML=MAPS.map(m=>`<option>${m.name}</option>`).join(''); mapSel.value=S.map.name; mapSel.onchange=e=>loadMapByName(e.target.value,S.map.name);
+
+$('#patrol').onchange=e=>{S.config=S.config||{};S.config.patrol=e.target.checked;save()};
+$('#autoSell').onchange=e=>{S.config=S.config||{};S.config.autoSell=e.target.checked;save()};
+$('#autoPotion').onchange=e=>{S.config=S.config||{};S.config.autoPotion=e.target.checked;save()};
+['aggro','loot','hpTh','mpTh'].forEach(id=>{$('#'+id).oninput=()=>{S.config=S.config||{};S.config[id]=+$('#'+id).value;updateHUD();save()}});
+$('#btnExport').onclick=()=>$('#ioBox').value=JSON.stringify(S,null,2); $('#btnImport').onclick=()=>{try{const obj=JSON.parse($('#ioBox').value||'{}');S=obj;save();location.reload()}catch(e){alert('JSON ไม่ถูกต้อง')}};
+$('#mapImage').onchange=e=>{const f=e.target.files?.[0]; if(!f)return; const img=new Image(); img.onload=()=>{setTexture(img); /* if current map is Central Valley, auto-fit labels */ if(S.map.name==='Central Valley') calibrateToTexture(); }; img.src=URL.createObjectURL(f); };
+$('#btnCalibrate').onclick=calibrateToTexture;
+$('#openShop').onclick=()=>{const near=S.npcs.find(n=>Math.hypot(S.player.x-n.x,S.player.y-n.y)<28&&n.role==='Shop');if(near){addItem('red',1,false);S.zeny=Math.max(0,S.zeny-12);renderInv();updateHUD()}else alert('ยังไม่อยู่ใกล้พ่อค้า')};
+
+// map tap: interact or move
+map.addEventListener('pointerdown',e=>{const r=map.getBoundingClientRect();const x=(e.clientX-r.left)*(S.map.size.w/map.width),y=(e.clientY-r.top)*(S.map.size.h/map.height);const near=S.npcs.find(n=>Math.hypot(x-n.x,y-n.y)<22);if(near){if(near.role==='Gate'){loadMapByName(near.to,S.map.name)}else if(near.role==='Quest'){alert('รับเควสที่ '+near.name)}else if(near.role==='Shop'){alert('เปิดร้านของ '+near.name)}}else{routeTo(x,y)}beep(600,70)});
+
+// actions & hotkeys
+$('#actions').addEventListener('click',e=>{const sk=e.target?.dataset?.skill;if(sk){if(sk==='1')power();if(sk==='2')buff();if(sk==='3')dash();if(sk==='4')heal();if(sk==='5')whirl();}const it=e.target?.dataset?.item;if(it)useItem(it)});
+addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;const k=e.key.toLowerCase();if(k==='1')power();if(k==='2')buff();if(k==='3')dash();if(k==='4')heal();if(k==='5')whirl();if(k==='q')useItem('red');if(k==='e')useItem('blue')});
+
+// joystick
+const joy=$('#joy'),knob=$('#joy .knob');let joyActive=false,jox=0,joyv={x:0,y:0};
+joy.addEventListener('pointerdown',e=>{joyActive=true;const r=joy.getBoundingClientRect();jox={cx:r.left+r.width/2,cy:r.top+r.height/2};moveKnob(e.clientX,e.clientY)});addEventListener('pointermove',e=>{if(!joyActive)return;moveKnob(e.clientX,e.clientY)});addEventListener('pointerup',()=>{if(joyActive){joyActive=false;knob.style.left='50%';knob.style.top='50%';joyv={x:0,y:0}}});
+function moveKnob(x,y){const dx=x-jox.cx,dy=y-jox.cy;const JR=64;const d=Math.min(JR-10,Math.hypot(dx,dy));const a=Math.atan2(dy,dx);const kx=Math.cos(a)*d,ky=Math.sin(a)*d;knob.style.left=(50+kx/JR*50)+'%';knob.style.top=(50+ky/JR*50)+'%';joyv={x:dx,y:dy};S.running=false}
+
+/* ---- Loop ---- */
+const fab=$('#fabStart');fab.onclick=()=>{S.running=!S.running;fab.classList.toggle('stop',S.running);fab.textContent=S.running?'STOP':'START';beep(S.running?900:360,80)};
+let last=performance.now();function loop(t){const dt=Math.min(33,t-last)/16.67;last=t; // manual move
+if(Math.hypot(joyv.x,joyv.y)>4){const a=Math.atan2(joyv.y,joyv.x);const sp=S.player.spd*(1+(S.player.buff.spd||0));S.player.x=clamp(S.player.x+Math.cos(a)*sp*dt,8,S.map.size.w-8);S.player.y=clamp(S.player.y+Math.sin(a)*sp*dt,8,S.map.size.h-8)}
+S.tick++; if(S.tick%2===0){S.trail.push({x:S.player.x,y:S.player.y}); if(S.trail.length>200) S.trail.shift();}
+// Auto target selection & pursuit
+if(!target || target.hp<=0 || dist(S.player,target) > ( $('#aggro').value|0 )*1.2){
+  if(!(S.tick%12)) target=chooseTarget();
+}
+if($('#autoAtk').checked && target){
+  const d=dist(S.player,target);
+  if(d>26){ // keep chasing target using path
+    if(!(S.tick%8)) routeTo(target.x,target.y);
+  }else{
+    S.route.length=0; // in range, stop to attack
+  }
+}
+// Follow route (manual START or auto-attack may set route)
+if((S.running || $('#autoAtk').checked) && S.route.length){
+  const p=S.player,wp=S.route[0];
+  const d=Math.hypot(wp.x-p.x,wp.y-p.y);
+  if(d>6){
+    const a=Math.atan2(wp.y-p.y,wp.x-p.x);
+    const sp=p.spd*(1+(p.buff.spd||0));
+    p.x+=Math.cos(a)*sp*dt;
+    p.y+=Math.sin(a)*sp*dt;
+  }else S.route.shift();
+}
+// Auto-heal/potion
+if($('#autoPotion').checked){
+  const hpPct=100*S.player.hp/S.player.hpMax;
+  const mpPct=100*S.player.mp/S.player.mpMax;
+  if(hpPct <= (+$('#hpTh').value||35)){
+    const hasRed=S.inv.find(it=>it.id==='red'&&it.qty>0);
+    if(hasRed) useItem('red'); else heal();
+  }
+  if(mpPct <= (+$('#mpTh').value||20)){
+    const hasBlue=S.inv.find(it=>it.id==='blue'&&it.qty>0);
+    if(hasBlue) useItem('blue');
+  }
+}
+// periodic buff on auto-attack
+if($('#autoAtk').checked && !(S.tick%240)) buff();
+attack();
+for(const m of S.mons){if(m.hp<=0&&m.respawn>0){m.respawn--;if(m.respawn===0){const s=S.spawns[~~(Math.random()*S.spawns.length)];const pos=randInCircle(s.x,s.y,s.r);Object.assign(m,{x:pos.x,y:pos.y,hp:m.hpMax})}}}
+ tickSkills(); draw(); updateHUD(); requestAnimationFrame(loop)}
+
+/* ---- Init ---- */
+function init(){document.body.dataset.skin=S.ui.skin; // dropdowns
+const serverSel=$('#server'); serverSel.value=S.server; const mapSel=$('#mapSelect'); mapSel.innerHTML=MAPS.map(m=>`<option>${m.name}</option>`).join(''); mapSel.value=S.map.name; loadMapByName(S.map.name); renderInv(); updateHUD(); requestAnimationFrame(loop)}
+init();
+</script></body>
+</html>
