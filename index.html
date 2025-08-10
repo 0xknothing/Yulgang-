@@ -1,0 +1,455 @@
+<!DOCTYPE html><html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>ygLight Bot – Web Simulation (Mobile, v3.6)</title>
+<style>
+  :root{--xp-bg:#d4d0c8;--xp-pane:#fff;--xp-border-dark:#808080;--xp-border-lite:#fff;--xp-border-mid:#c0c0c0;--xp-blue:#3a6ea5;--xp-blue-weak:#e8f0fb;--ok:#2da44e;--warn:#e0a800;--bad:#d73a49;--accent:#0e639c;--muted:#6b6b6b;--rare:#8a2be2}
+  *{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--xp-bg);font-family:Tahoma,Arial,sans-serif;color:#111}
+  .window{border:2px solid var(--xp-border-dark);border-top-color:var(--xp-border-lite);border-left-color:var(--xp-border-lite);background:var(--xp-pane);box-shadow:0 1px 0 var(--xp-border-lite) inset,0 -1px 0 var(--xp-border-dark) inset}
+  .titlebar{background:linear-gradient(#1f4c86,var(--xp-blue));color:#fff;padding:.35rem .6rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+  .titlebar .dot{width:10px;height:10px;border-radius:50%;background:#ffcf33;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+  .toolbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.4rem;border-bottom:1px solid var(--xp-border-mid);background:#f5f5f5}
+  .toolbar label{font-size:.8rem;opacity:.9}
+  select,input,button{font-family:inherit}
+  .btn{border:2px solid var(--xp-border-dark);border-top-color:var(--xp-border-lite);border-left-color:var(--xp-border-lite);background:#ece9d8;padding:.35rem .6rem;font-weight:700;cursor:pointer}
+  .btn:active{transform:translateY(1px)}.btn.ghost{background:#fff}.btn.bad{color:#fff;background:#c0392b;border-color:#7f2c23}.btn.ok{color:#fff;background:#2da44e;border-color:#1b7a36}
+  .xpbar{height:14px;background:#ddd;border:1px solid var(--xp-border-dark);position:relative}
+  .xpbar>span{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#8fc8ff,#3aa0ff)}.hp>span{background:linear-gradient(#ffb0b0,#ff4d4d)}.mp>span{background:linear-gradient(#b0d8ff,#4d83ff)}.exp>span{background:linear-gradient(#b6ffb0,#28a745)}
+  .grid{display:grid;gap:.5rem;padding:.5rem;grid-template-columns:1fr;grid-template-rows:auto auto 1fr auto;height:calc(100dvh - 4px)}
+  .columns{display:grid;gap:.5rem;grid-template-columns:1fr;grid-auto-rows:minmax(120px,auto)}
+  @media(min-width:980px){.grid{grid-template-rows:auto auto 1fr}.columns{grid-template-columns:1.15fr .85fr}}
+  .panel{padding:.5rem}.tabs{display:flex;gap:.25rem;border-bottom:1px solid var(--xp-border-dark);background:var(--xp-blue-weak);padding:.25rem}
+  .tab{padding:.25rem .5rem;border:1px solid var(--xp-border-dark);background:#fff;cursor:pointer;font-size:.9rem}.tab.active{background:#ffffe0;font-weight:700}
+  .tabpages>section{display:none}.tabpages>section.active{display:block}
+  .kv{display:grid;grid-template-columns:140px 1fr;gap:.25rem .5rem;font-size:.9rem}.info-bars{display:grid;gap:.35rem}
+  .logwrap{display:grid;grid-template-rows:auto 1fr}.logtabs{display:flex;gap:.25rem;margin-bottom:.25rem}
+  .log{font-family:Consolas,Menlo,monospace;background:#fffdf5;border-top:1px solid var(--xp-border-dark);height:160px;overflow:auto;padding:.5rem}
+  .log .sys{color:#666}.log .ok{color:var(--ok)}.log .bad{color:var(--bad)}.log .warn{color:#b58900}
+  table{width:100%;border-collapse:collapse;font-size:.85rem}th,td{border:1px solid #bbb;padding:.25rem .35rem;white-space:nowrap}thead{background:#f0f6ff}
+  #mapWrap{position:relative}#mapCanvas{display:block;width:100%;height:400px;background:#eef6ff;border:1px solid var(--xp-border-dark)}
+  #hudOver{position:absolute;left:.35rem;top:.35rem;font-size:.8rem;background:rgba(255,255,255,.7);padding:.25rem .35rem;border:1px solid var(--xp-border-dark)}
+  #minimap{position:absolute;right:.35rem;bottom:.35rem;width:120px;height:78px;background:#fff;border:1px solid #777}
+  .row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}.grow{flex:1}
+  .pill{display:inline-flex;gap:.4rem;align-items:center;border:1px solid var(--xp-border-dark);background:#fff;padding:.25rem .4rem;border-radius:999px}
+  .chip{display:inline-block;font-size:.75rem;background:#eef;border:1px solid #aac;border-radius:999px;padding:.1rem .45rem;color:#224}.chip.rare{background:#f4e9ff;border-color:#d3b0ff;color:#5b2c83}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;background:#222;color:#fff;padding:.5rem .75rem;border-radius:8px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .3s}
+  .toast.show{opacity:1}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:1rem}
+  .modal .window{max-width:720px;width:100%}.modal.show{display:flex}
+  .invgrid{display:grid;grid-template-columns:repeat(5,minmax(64px,1fr));gap:.35rem}.slot{border:1px solid #999;background:#fff;height:64px;display:flex;align-items:center;justify-content:center;position:relative}
+  .slot .qty{position:absolute;right:2px;bottom:2px;background:rgba(0,0,0,.65);color:#fff;padding:0 4px;border-radius:4px;font-size:.75rem}
+  .tree{display:grid;gap:.5rem;grid-template-columns:repeat(2,minmax(220px,1fr))}.node{border:1px dashed #aaa;padding:.5rem;background:#fff}.node h4{margin:.1rem 0}
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="window">
+    <div class="titlebar"><span class="dot"></span> ygLight Bot – Simulation</div>
+    <div class="toolbar">
+      <label>เซิร์ฟเวอร์</label>
+      <select id="server"><option value="r1">ทดสอบภูธร</option><option value="r2">พีเคโหด</option><option value="r3">เซิร์ฟกิจกรรม</option></select>
+      <label>แผนที่</label>
+      <select id="mapSelect"></select>
+      <label>ตัวละคร</label>
+      <select id="character"></select>
+      <label>คอนฟิก</label>
+      <select id="slot"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+      <input id="username" placeholder="บัญชี" style="min-width:90px"/>
+      <input id="password" type="password" placeholder="รหัสผ่าน" style="min-width:90px"/>
+      <button class="btn" id="btnLogin">Login</button>
+      <button class="btn" id="btnLogout" disabled>Logout</button>
+      <div class="grow"></div>
+      <div style="min-width:140px">
+        <div class="xpbar hp" title="HP"><span id="barHP" style="width:60%"></span></div>
+        <div class="xpbar mp" title="MP" style="margin-top:3px"><span id="barMP" style="width:60%"></span></div>
+      </div>
+      <div style="min-width:120px;margin-left:.35rem"><div class="xpbar exp" title="EXP"><span id="barEXP" style="width:8%"></span></div></div>
+    </div>
+  </div>  <div class="grid">
+    <div class="window">
+      <div class="tabs">
+        <button class="tab active" data-tab="news">ข่าวสาร</button>
+        <button class="tab" data-tab="map">แผนที่</button>
+        <button class="tab" data-tab="status">สถานะปัจจุบัน</button>
+        <button class="tab" data-tab="skills">สกิล</button>
+        <button class="tab" data-tab="skilltree">สกิลทรี</button>
+        <button class="tab" data-tab="quests">เควส</button>
+        <button class="tab" data-tab="result">ผลลัพธ์</button>
+        <button class="tab" data-tab="config">ตั้งค่า/บันทึก</button>
+      </div>
+      <div class="tabpages panel" id="tabpages">
+        <section id="news" class="active">
+          <div class="row"><b>ระบบตรวจสอบสมาชิก</b></div>
+          <div class="row" style="margin-top:.5rem">
+            <input id="memUser" placeholder="ชื่อสมาชิก" />
+            <input id="memPass" placeholder="รหัสผ่าน" type="password" />
+            <button class="btn" id="btnMemLogin">LOG IN</button>
+          </div>
+          <p style="margin-top:.5rem">• เวอร์ชัน <span class="chip">v3.6</span> — ปรับให้ <b>ทุกปุ่มทำงานจริง</b> + ฮ็อตคีย์ครบ</p>
+        </section><section id="map">
+      <div class="panel" id="mapWrap">
+        <canvas id="mapCanvas"></canvas>
+        <div id="hudOver">Zoom <input id="zoom" type="range" min="0.6" max="2" step="0.1" value="1"/> | Radar <span id="radarVal" class="chip">180px</span> | <label class="pill"><input type="checkbox" id="patrol"> Patrol</label> <button class="btn ghost" id="btnClearWP">ล้าง waypoints</button></div>
+        <canvas id="minimap"></canvas>
+      </div>
+      <div class="panel">
+        <div class="row" style="gap:.35rem">
+          <label class="pill"><input type="checkbox" id="chkNames" checked> Name</label>
+          <label class="pill"><input type="checkbox" id="chkPlayers" checked> Player</label>
+          <label class="pill"><input type="checkbox" id="chkNPC" checked> NPC</label>
+          <label class="pill"><input type="checkbox" id="chkMonster" checked> Monster</label>
+          <label class="pill"><input type="checkbox" id="chkPath" checked> Path</label>
+          <label class="pill"><input type="checkbox" id="chkSpawn" checked> Spawn</label>
+          <div class="grow"></div>
+          <div class="pill">ล่ามอน:<select id="filterMon"><option value="all">ทั้งหมด</option><option>สไลม์</option><option>หมูป่า</option><option>งูเขียว</option><option>โครงกระดูก</option><option>กระต่ายป่า</option></select></div>
+          <button class="btn ok" id="btnStart">เริ่มบอท</button>
+          <button class="btn bad" id="btnStop">หยุด</button>
+        </div>
+      </div>
+      <p class="muted" style="padding:.35rem .5rem">แตะสั้น = เดินไปจุด | กดค้าง ~0.5s = เพิ่ม Waypoint | ปุ่ม: 1-5,Q,E</p>
+    </section>
+
+    <section id="status">
+      <div class="panel">
+        <h3 style="margin:0 0 .5rem">Information</h3>
+        <div class="info-bars" style="max-width:720px">
+          <div class="kv"><div>ชื่อ:</div><div id="infoName">-</div></div>
+          <div class="kv"><div>เลเวล:</div><div><span id="infoLv">1</span> (EXP <span id="infoExp">0</span>/<span id="infoExpNext">100</span>) | SP <span id="infoSP">0</span></div></div>
+          <div class="kv"><div>ค่าสถานะ:</div><div>STR <span id="stSTR">1</span> | AGI <span id="stAGI">1</span> | DEX <span id="stDEX">1</span> | VIT <span id="stVIT">1</span></div></div>
+          <div class="kv"><div>คริติคอล:</div><div><span id="infoCrit">5</span>% | หลีกเลี่ยง <span id="infoDodge">5</span>%</div></div>
+          <div class="kv"><div>เงิน:</div><div id="infoZeny">0 Z</div></div>
+          <div class="kv"><div>อุปกรณ์:</div><div id="equipText" class="muted">ไม่มี</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 style="margin:0 0 .5rem">Auto Bot</h3>
+        <div class="row" style="margin-bottom:.35rem">
+          <label class="pill"><input type="checkbox" id="autoMove" checked> เดินหาเป้าหมาย</label>
+          <label class="pill"><input type="checkbox" id="autoAttack" checked> โจมตี</label>
+          <label class="pill"><input type="checkbox" id="autoLoot" checked> เก็บของ</label>
+          <label class="pill"><input type="checkbox" id="autoPotion" checked> ใช้ยา</label>
+          <label class="pill"><input type="checkbox" id="autoSell"> ขายของอัตโนมัติ</label>
+          <label class="pill"><input type="checkbox" id="kite"> ถอยเมื่อเจ็บ</label>
+          <label class="pill"><input type="checkbox" id="returnTown"> กลับเมืองฉุกเฉิน</label>
+        </div>
+        <div class="row">
+          <label>HP ต่ำกว่า</label><input type="range" id="hpThreshold" min="5" max="90" value="35"> <span id="hpThVal">35</span>%
+          <label>MP ต่ำกว่า</label><input type="range" id="mpThreshold" min="0" max="80" value="20"> <span id="mpThVal">20</span>%
+          <label>ระยะตรวจจับ</label><input type="range" id="aggroRange" min="60" max="360" value="180"> <span id="aggroVal">180</span>px
+          <label>รัศมีเก็บของ</label><input type="range" id="lootRange" min="20" max="200" value="80"> <span id="lootVal">80</span>px
+          <label>ล้อมมากกว่า</label><input type="range" id="threatCount" min="2" max="8" value="4"> ≥ <span id="threatVal">4</span>
+        </div>
+        <div class="row">
+          <label class="pill"><input type="checkbox" id="autoAOE"> Auto AoE</label>
+          <label>AoE เมื่อศัตรู ≥</label><input type="range" id="aoeCount" min="2" max="8" value="3"> <span id="aoeVal">3</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 style="margin:0 0 .5rem">กระเป๋า (Inventory)</h3>
+        <div id="inv" class="invgrid"></div>
+      </div>
+    </section>
+
+    <section id="skills">
+      <div class="panel">
+        <h3 style="margin-top:0">สกิลใช้งาน</h3>
+        <div class="row" style="flex-wrap:wrap">
+          <button class="btn" id="skillPower">Power Strike (1)</button>
+          <button class="btn" id="skillBuff">Battle Cry (2)</button>
+          <button class="btn" id="skillDash">Dash (3)</button>
+          <button class="btn" id="skillHeal">Meditate (4)</button>
+          <button class="btn" id="skillWhirl">Whirlwind (5)</button>
+          <div class="grow"></div>
+          <div id="buffHud" class="chip">ไม่มีบัฟ</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="skilltree">
+      <div class="panel">
+        <div class="row"><h3 style="margin:0">Skill Tree</h3><div class="grow"></div>SP คงเหลือ: <b id="spLeft">0</b></div>
+        <div class="tree" style="margin-top:.5rem">
+          <div class="node"><h4>Power Mastery</h4><p>เพิ่มพลังโจมตีพื้นฐาน</p><div>Lv <span id="stPower">0</span> <button class="btn" data-skill="power">อัป</button></div></div>
+          <div class="node"><h4>Vitality Training</h4><p>เพิ่ม HP สูงสุด</p><div>Lv <span id="stVita">0</span> <button class="btn" data-skill="vita">อัป</button></div></div>
+          <div class="node"><h4>Agility Footwork</h4><p>เพิ่มหลบหลีก/ความเร็ว</p><div>Lv <span id="stAgil">0</span> <button class="btn" data-skill="agil">อัป</button></div></div>
+          <div class="node"><h4>Battle Instinct</h4><p>เพิ่มคริติคอล</p><div>Lv <span id="stCrit">0</span> <button class="btn" data-skill="crit">อัป</button></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="quests">
+      <div class="panel"><h3 style="margin:0 0 .5rem">ภารกิจ</h3><div id="questBox">รับภารกิจจาก <b>คนส่งเควส</b> ที่แผนที่</div></div>
+    </section>
+
+    <section id="result">
+      <div class="panel">
+        <p>สรุปผลการล่า – ฆ่า <b><span id="sumKills">0</span></b> | เก็บของ <b><span id="sumLoots">0</span></b> | เงินรวม <b><span id="sumZeny">0</span> Z</b></p>
+        <div class="row"><div class="grow"></div><button class="btn" id="btnReset">รีเซ็ตข้อมูล</button></div>
+      </div>
+    </section>
+
+    <section id="config">
+      <div class="panel">
+        <h3 style="margin:0 0 .5rem">บันทึก/กู้คืน</h3>
+        <div class="row" style="margin-bottom:.5rem">
+          <button class="btn" id="btnExport">ส่งออก JSON</button>
+          <button class="btn" id="btnImport">นำเข้า JSON</button>
+          <textarea id="ioBox" rows="6" style="width:100%" placeholder='วาง JSON ที่นี่...'></textarea>
+        </div>
+        <div class="row">
+          <button class="btn ghost" data-slot="A">บันทึก Slot A</button>
+          <button class="btn ghost" data-slot="B">บันทึก Slot B</button>
+          <button class="btn ghost" data-slot="C">บันทึก Slot C</button>
+          <div class="grow"></div>
+          <button class="btn" id="btnLoadA">โหลด A</button>
+          <button class="btn" id="btnLoadB">โหลด B</button>
+          <button class="btn" id="btnLoadC">โหลด C</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 style="margin:0 0 .5rem">โปรไฟล์ตัวละคร</h3>
+        <div class="row">
+          <input id="newCharName" placeholder="ชื่อตัวละครใหม่"/>
+          <button class="btn" id="btnNewChar">สร้าง</button>
+          <button class="btn" id="btnRenameChar">เปลี่ยนชื่อ</button>
+          <button class="btn bad" id="btnDelChar">ลบ</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 style="margin:0 0 .5rem">การตั้งค่า</h3>
+        <div class="row">
+          <label>ความเร็วเกม</label><input id="speedMulti" type="range" min="0.6" max="2.0" step="0.1" value="1"> <span id="speedVal">1.0x</span>
+          <label class="pill"><input type="checkbox" id="sfx"> เสียงแจ้งเตือน</label>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="columns">
+  <div class="window panel logwrap">
+    <div class="logtabs">
+      <button class="tab active" data-tab="log-sys">ระบบ</button>
+      <button class="tab" data-tab="log-all">ทั้งหมด</button>
+      <button class="tab" data-tab="log-team">ทีม</button>
+      <button class="tab" data-tab="log-trade">ซื้อขาย</button>
+      <button class="tab" data-tab="log-whisper">กระซิบ</button>
+    </div>
+    <div id="log-sys" class="log active"></div>
+    <div id="log-all" class="log"></div>
+    <div id="log-team" class="log"></div>
+    <div id="log-trade" class="log"></div>
+    <div id="log-whisper" class="log"></div>
+  </div>
+  <div class="window panel">
+    <h3 style="margin-top:0">Environment</h3>
+    <div class="tabs" style="margin-top:.25rem">
+      <button class="tab active" data-tab="env-players">ผู้เล่น</button>
+      <button class="tab" data-tab="env-mon">มอนสเตอร์</button>
+      <button class="tab" data-tab="env-npc">NPC</button>
+      <button class="tab" data-tab="env-item">ไอเทม</button>
+      <button class="tab" data-tab="env-obs">สิ่งกีดขวาง</button>
+      <button class="tab" data-tab="env-wp">Waypoints</button>
+    </div>
+    <div class="tabpages" id="env-pages" style="margin-top:.25rem">
+      <section id="env-players" class="active"><table><thead><tr><th>ID</th><th>ชื่อ</th><th>เลเวล</th><th>อาชีพ</th></tr></thead><tbody id="tblPlayers"></tbody></table></section>
+      <section id="env-mon"><table><thead><tr><th>ID</th><th>ชื่อ</th><th>HP</th><th>EXP</th><th>พิกัด</th></tr></thead><tbody id="tblMons"></tbody></table></section>
+      <section id="env-npc"><table><thead><tr><th>ID</th><th>ชื่อ</th><th>บทบาท</th><th>พิกัด</th></tr></thead><tbody id="tblNPC"></tbody></table></section>
+      <section id="env-item"><table><thead><tr><th>#</th><th>ชื่อ</th><th>ความหายาก</th><th>จำนวน</th></tr></thead><tbody id="tblItems"></tbody></table></section>
+      <section id="env-obs"><table><thead><tr><th>#</th><th>X</th><th>Y</th><th>W</th><th>H</th></tr></thead><tbody id="tblObs"></tbody></table></section>
+      <section id="env-wp"><table><thead><tr><th>#</th><th>X</th><th>Y</th></tr></thead><tbody id="tblWP"></tbody></table></section>
+    </div>
+  </div>
+</div>
+
+  </div>  <div id="toast" class="toast">OK</div>
+  <div id="shopModal" class="modal" aria-hidden="true">
+    <div class="window">
+      <div class="titlebar"><span class="dot"></span> ร้านค้า NPC</div>
+      <div class="panel">
+        <div class="row">
+          <div class="grow">เงินปัจจุบัน: <b id="shopMoney">0 Z</b></div>
+          <button class="btn" id="btnQuickSell">ขายของทั่วไป</button>
+          <button class="btn" id="shopClose">ปิด</button>
+        </div>
+        <div class="tabs" style="margin-top:.35rem">
+          <button class="tab active" data-tab="shop-buy">ซื้อ</button>
+          <button class="tab" data-tab="shop-sell">ขาย</button>
+          <button class="tab" data-tab="shop-ware">คลัง (Warehouse)</button>
+        </div>
+        <div class="tabpages" id="shopPages" style="margin-top:.25rem">
+          <section id="shop-buy" class="active"><table><thead><tr><th>สินค้า</th><th>ราคา</th><th></th></tr></thead><tbody id="shopList"></tbody></table></section>
+          <section id="shop-sell"><table><thead><tr><th>ชื่อ</th><th>จำนวน</th><th>ราคา</th><th></th></tr></thead><tbody id="sellList"></tbody></table></section>
+          <section id="shop-ware"><div class="row">เงินในคลัง: <b id="bankMoney">0 Z</b> <button class="btn" id="btnDepZ">ฝาก 100Z</button> <button class="btn" id="btnWitZ">ถอน 100Z</button></div>
+            <table style="margin-top:.35rem"><thead><tr><th>ชื่อ</th><th>จำนวน</th><th></th></tr></thead><tbody id="bankList"></tbody></table></section>
+        </div>
+      </div>
+    </div>
+  </div><script>
+/* v3.6 – wire every button */
+const $=(q,root=document)=>root.querySelector(q);const $$=(q,root=document)=>[...root.querySelectorAll(q)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+let audioCtx=null;function beep(freq=880,ms=120){if(!$('#sfx').checked)return;try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.type='sine';o.frequency.value=freq;o.connect(g);g.connect(audioCtx.destination);g.gain.value=0.05;o.start();setTimeout(()=>o.stop(),ms)}catch(e){}}
+function log(msg,cls='sys',ch='sys'){const t=new Date().toLocaleTimeString();const line=`<div class="${cls}">[${t}] ${msg}</div>`;$('#log-sys').insertAdjacentHTML('afterbegin',line);if(ch!=='sys')$(`#log-${ch}`)?.insertAdjacentHTML('afterbegin',line);$('#log-all').insertAdjacentHTML('afterbegin',line)}
+
+/* --- global save for multi-profiles & bank --- */
+const STORAGE_KEY='ygsim_v36';
+let profiles=[{name:'เทพทางป',state:null}];let activeIdx=0;const bank={zeny:0,items:[]};
+function saveGlobal(){localStorage.setItem(STORAGE_KEY+':profiles',JSON.stringify(profiles));localStorage.setItem(STORAGE_KEY+':bank',JSON.stringify(bank));localStorage.setItem(STORAGE_KEY+':map',game.mapName)}
+function loadGlobal(){try{const P=JSON.parse(localStorage.getItem(STORAGE_KEY+':profiles')||'null');if(P)profiles=P;const B=JSON.parse(localStorage.getItem(STORAGE_KEY+':bank')||'null');if(B)Object.assign(bank,B);const m=localStorage.getItem(STORAGE_KEY+':map');if(m)game.mapName=m}catch(e){}}
+
+/* --- rates by server --- */
+const SERVER_RATES={r1:{exp:1,drop:1,respawn:1},r2:{exp:1.4,drop:1.2,respawn:0.8},r3:{exp:2.0,drop:1.6,respawn:0.6}};
+
+/* --- per-profile state --- */
+function baseState(){return{running:false,mapSize:{w:1200,h:800},cell:20,gridW:60,gridH:40,grid:[],zoom:1,speed:1,tick:0,kills:0,loots:0,zeny:0,mapName:'Central Valley',server:'r1',rates:SERVER_RATES['r1'],config:{hpThreshold:35,mpThreshold:20,aggroRange:180,lootRange:80,priority:'nearest',autoMove:true,autoAttack:true,autoLoot:true,autoPotion:true,autoSell:false,kite:false,returnTown:false,filter:'all',autoAOE:false,threatCount:4,patrol:false},player:{id:1,name:'เทพทางป',job:'นักสู้',lv:1,sp:0,exp:0,next:100,hp:120,hpMax:120,mp:50,mpMax:50,x:200,y:220,spd:1.7,str:3,agi:3,dex:2,vit:3,buff:{atk:0,spd:0,t:0},talents:{power:0,vita:0,agil:0,crit:0}},mons:[],npcs:[],spawns:[],obstacles:[],inv:[],equip:{weapon:null,armor:null},pathTrail:[],route:[],waypoints:[],quest:{id:null,name:'',target:'',need:0,got:0,reward:{zeny:0,item:null}},cfgSlots:{1:null,2:null,3:null}}}
+let game=baseState();
+
+/* --- maps --- */
+const MAPS=[{name:'Central Valley',size:{w:1200,h:800},obstacles:[{x:420,y:260,w:180,h:40},{x:620,y:520,w:220,h:60},{x:240,y:540,w:100,h:160}],spawns:[{x:300,y:260,r:140},{x:700,y:220,r:160},{x:840,y:540,r:180}],npcs:[{id:1,name:'พ่อค้า',role:'Shop',x:160,y:120},{id:2,name:'คนส่งเควส',role:'Quest',x:860,y:220},{id:3,name:'คนเฝ้าประตู',role:'Gate',x:400,y:640,to:'Bamboo Forest'},{id:8,name:'เจ้าหน้าที่คลัง',role:'Storage',x:200,y:700}]},{name:'Bamboo Forest',size:{w:1200,h:800},obstacles:[{x:300,y:300,w:260,h:60},{x:760,y:200,w:60,h:320},{x:520,y:560,w:260,h:60}],spawns:[{x:260,y:220,r:120},{x:860,y:260,r:160},{x:900,y:580,r:160}],npcs:[{id:4,name:'ช่างตีเหล็ก',role:'Shop',x:160,y:120},{id:5,name:'ผู้คุมป่า',role:'Gate',x:1100,y:120,to:'Desert Outpost'}]},{name:'Desert Outpost',size:{w:1200,h:800},obstacles:[{x:360,y:240,w:80,h:320},{x:720,y:160,w:280,h:80}],spawns:[{x:300,y:220,r:120},{x:780,y:320,r:160},{x:980,y:560,r:160}],npcs:[{id:6,name:'พ่อค่าวังทราย',role:'Shop',x:112,y:120},{id:7,name:'นักเดินทาง',role:'Gate',x:1080,y:720,to:'Central Valley'}]}];
+
+/* --- UI populate --- */
+function populateMapSelect(){const sel=$('#mapSelect');sel.innerHTML='';MAPS.forEach(m=>{const o=document.createElement('option');o.textContent=m.name;sel.appendChild(o)});sel.value=game.mapName;sel.onchange=()=>loadMap(sel.value)}
+function populateCharacters(){const sel=$('#character');sel.innerHTML='';profiles.forEach((p,i)=>{const o=document.createElement('option');o.textContent=p.name;o.value=i;sel.appendChild(o)});sel.value=String(activeIdx);sel.onchange=()=>switchCharacter(+sel.value)}
+
+/* --- character switching --- */
+function snapshotState(){profiles[activeIdx].state=JSON.parse(JSON.stringify(game));saveGlobal()}
+function switchCharacter(i){snapshotState();activeIdx=i;if(!profiles[activeIdx].state){profiles[activeIdx].state=baseState();profiles[activeIdx].state.player.name=profiles[activeIdx].name}game=JSON.parse(JSON.stringify(profiles[activeIdx].state));recalcDerived();loadMap(game.mapName);updateAllUI();log('สลับตัวละครเป็น '+profiles[activeIdx].name,'ok')}
+
+/* --- A* 8-way --- */
+function buildGrid(){game.cell=20;game.gridW=Math.ceil(game.mapSize.w/game.cell);game.gridH=Math.ceil(game.mapSize.h/game.cell);game.grid=new Array(game.gridW*game.gridH).fill(0);for(const o of game.obstacles){const x0=Math.floor(o.x/game.cell),x1=Math.ceil((o.x+o.w)/game.cell);const y0=Math.floor(o.y/game.cell),y1=Math.ceil((o.y+o.h)/game.cell);for(let y=y0;y<y1;y++){for(let x=x0;x<x1;x++){game.grid[y*game.gridW+x]=1}}}}
+function nodeKey(x,y){return y*game.gridW+x}function passable(x,y){return x>=0&&y>=0&&x<game.gridW&&y<game.gridH&&game.grid[nodeKey(x,y)]===0}
+function astar(sx,sy,tx,ty){sx=Math.floor(sx/game.cell);sy=Math.floor(sy/game.cell);tx=Math.floor(tx/game.cell);ty=Math.floor(ty/game.cell);const open=new Set(),came={},g={},f={};const pq=[];const h=(x,y)=>Math.hypot(x-tx,y-ty);const push=(x,y)=>{const k=nodeKey(x,y);open.add(k);g[k]=g[k]??1e9;f[k]=g[k]+h(x,y);pq.push([f[k],x,y])};push(sx,sy);g[nodeKey(sx,sy)]=0;f[nodeKey(sx,sy)]=h(sx,sy);const dirs=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,Math.SQRT2],[1,-1,Math.SQRT2],[-1,1,Math.SQRT2],[-1,-1,Math.SQRT2]];while(pq.length){pq.sort((a,b)=>a[0]-b[0]);let[_,x,y]=pq.shift();const k=nodeKey(x,y);if(x===tx&&y===ty){const path=[];let cur=k,cx=x,cy=y;while(came[cur]){const[px,py]=came[cur];path.push({x:(cx+0.5)*game.cell,y:(cy+0.5)*game.cell});cx=px;cy=py;cur=nodeKey(cx,cy)}return path.reverse()}open.delete(k);for(const[dx,dy,cost]of dirs){const nx=x+dx,ny=y+dy;if(!passable(nx,ny))continue;if(dx&&dy&&(!passable(x+dx,y)||!passable(x,y+dy)))continue;const nk=nodeKey(nx,ny);const tentative=(g[k]??1e9)+cost;if(tentative<(g[nk]??1e9)){came[nk]=[x,y];g[nk]=tentative;f[nk]=tentative+h(nx,ny);pq.push([f[nk],nx,ny])}}}return[]}
+function lineIntersectsRect(x1,y1,x2,y2,r){const steps=24;for(let i=0;i<=steps;i++){const t=i/steps;const x=x1+(x2-x1)*t;const y=y1+(y2-y1)*t;if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h)return true}return false}
+function needPathTo(x,y){for(const r of game.obstacles){if(lineIntersectsRect(game.player.x,game.player.y,x,y,r))return true}return false}
+
+/* --- derived stats --- */
+function recalcDerived(){const t=game.player.talents;game.player.str=3+t.power;game.player.vit=3+t.vita;game.player.agi=3+t.agil;game.player.dex=2;game.player.hpMax=120+t.vita*14;game.player.spd=1.7+t.agil*0.08;game.player.crit=5+t.crit*3;game.player.dodge=5+t.agil*2;if(game.player.hp>game.player.hpMax)game.player.hp=game.player.hpMax}
+
+/* --- refs --- */
+const barHP=$('#barHP'),barMP=$('#barMP'),barEXP=$('#barEXP');const infoName=$('#infoName'),infoLv=$('#infoLv'),infoExp=$('#infoExp'),infoExpNext=$('#infoExpNext'),infoSP=$('#infoSP');const stSTR=$('#stSTR'),stAGI=$('#stAGI'),stDEX=$('#stDEX'),stVIT=$('#stVIT');const infoZeny=$('#infoZeny');const hpTh=$('#hpThreshold'),hpThVal=$('#hpThVal');const mpTh=$('#mpThreshold'),mpThVal=$('#mpThVal');const aggro=$('#aggroRange'),aggroVal=$('#aggroVal');const lootRange=$('#lootRange'),lootVal=$('#lootVal');const threat=$('#threatCount'),threatVal=$('#threatVal');const aoeCount=$('#aoeCount'),aoeVal=$('#aoeVal');const btnStart=$('#btnStart'),btnStop=$('#btnStop');const radarVal=$('#radarVal');const speed=$('#speedMulti'),speedVal=$('#speedVal');
+function recalcBars(){barHP.style.width=(100*game.player.hp/game.player.hpMax)+'%';barMP.style.width=(100*game.player.mp/game.player.mpMax)+'%';barEXP.style.width=(100*game.player.exp/game.player.next)+'%';infoName.textContent=game.player.name;infoLv.textContent=game.player.lv;infoSP.textContent=game.player.sp;infoExp.textContent=game.player.exp;infoExpNext.textContent=game.player.next;stSTR.textContent=game.player.str;stAGI.textContent=game.player.agi;stDEX.textContent=game.player.dex;stVIT.textContent=game.player.vit;$('#infoCrit').textContent=game.player.crit||5;$('#infoDodge').textContent=game.player.dodge||5;infoZeny.textContent=game.zeny+" Z";$('#sumKills').textContent=game.kills;$('#sumLoots').textContent=game.loots;$('#sumZeny').textContent=game.zeny;updateEquipText()}
+function updateEquipText(){const e=game.equip;const text=[e.weapon?`อาวุธ: ${e.weapon.name}`:null,e.armor?`เกราะ: ${e.armor.name}`:null].filter(Boolean).join(' | ');$('#equipText').textContent=text||'ไม่มี'}
+
+/* --- handlers (ALL BUTTONS WIRED) --- */
+$('#server').onchange=e=>{game.server=e.target.value;game.rates=SERVER_RATES[game.server];log(`สลับเซิร์ฟเวอร์ → EXP x${game.rates.exp}, DROP x${game.rates.drop}`,'ok');beep(900,90)}
+$('#slot').onchange=e=>{const i=e.target.value;const snap=game.cfgSlots[i];if(snap){Object.assign(game.config,snap);updateAllUI();log('โหลดคอนฟิกจาก Slot '+i,'ok')}else{game.cfgSlots[i]=JSON.parse(JSON.stringify(game.config));log('บันทึกคอนฟิกปัจจุบันไป Slot '+i,'sys')}snapshotState()}
+$('#btnLogin').onclick=()=>{if(!$('#username').value||!$('#password').value){log('กรอกบัญชี/รหัสก่อน','warn');return}$('#btnLogin').disabled=true;$('#btnLogout').disabled=false;log('เข้าสู่ระบบสำเร็จ (จำลอง)','ok');beep(760,90)}
+$('#btnLogout').onclick=()=>{$('#btnLogin').disabled=false;$('#btnLogout').disabled=true;log('ออกจากระบบแล้ว','warn');beep(420,90)}
+$('#btnMemLogin').onclick=()=>{if(!$('#memUser').value||!$('#memPass').value){log('ใส่ชื่อ/รหัสสมาชิกก่อน','warn');return}log('ล็อกอินสมาชิกชุมชนสำเร็จ (จำลอง)','ok')}
+
+hpTh.oninput=()=>{hpThVal.textContent=hpTh.value;game.config.hpThreshold=+hpTh.value;snapshotState()};mpTh.oninput=()=>{mpThVal.textContent=mpTh.value;game.config.mpThreshold=+mpTh.value;snapshotState()};aggro.oninput=()=>{aggroVal.textContent=aggro.value;game.config.aggroRange=+aggro.value;radarVal.textContent=aggro.value+'px';snapshotState()};lootRange.oninput=()=>{lootVal.textContent=lootRange.value;game.config.lootRange=+lootRange.value;snapshotState()};threat.oninput=()=>{threatVal.textContent=threat.value;game.config.threatCount=+threat.value;snapshotState()};aoeCount.oninput=()=>{aoeVal.textContent=aoeCount.value;snapshotState()};
+$('#autoAOE').onchange=e=>game.config.autoAOE=e.target.checked;$('#filterMon').onchange=e=>game.config.filter=e.target.value;$('#autoMove').onchange=e=>game.config.autoMove=e.target.checked;$('#autoAttack').onchange=e=>game.config.autoAttack=e.target.checked;$('#autoLoot').onchange=e=>game.config.autoLoot=e.target.checked;$('#autoPotion').onchange=e=>game.config.autoPotion=e.target.checked;$('#autoSell').onchange=e=>game.config.autoSell=e.target.checked;$('#kite').onchange=e=>game.config.kite=e.target.checked;$('#returnTown').onchange=e=>game.config.returnTown=e.target.checked;$('#patrol').onchange=e=>game.config.patrol=e.target.checked;$('#zoom').oninput=e=>{game.zoom=+e.target.value;resizeMap()};
+$('#btnReset').onclick=()=>{localStorage.removeItem(STORAGE_KEY+':profiles');localStorage.removeItem(STORAGE_KEY+':bank');localStorage.removeItem(STORAGE_KEY+':map');location.reload()};
+btnStart.onclick=()=>{game.running=true;log('เริ่มทำงานบอท','ok');beep(880,90)};btnStop.onclick=()=>{game.running=false;log('หยุดทำงานบอท','warn');beep(360,90)};speed.oninput=()=>{game.speed=+speed.value;speedVal.textContent=game.speed.toFixed(1)+'x';snapshotState()}
+
+/* --- map render --- */
+const map=$('#mapCanvas');const ctx=map.getContext('2d');const mini=$('#minimap');const mctx=mini.getContext('2d');
+function resizeMap(){const r=$('#mapWrap').getBoundingClientRect();map.width=r.width;map.height=Math.max(260,Math.min(420,r.width*0.55));mini.width=120;mini.height=78;draw()}
+addEventListener('resize',resizeMap);setTimeout(resizeMap,60);
+function drawGrid(){const z=game.zoom,step=40*z;ctx.save();ctx.fillStyle='#eef6ff';ctx.fillRect(0,0,map.width,map.height);ctx.strokeStyle='#c7e0ff';ctx.lineWidth=1;ctx.beginPath();for(let x=0;x<map.width;x+=step){ctx.moveTo(x,0);ctx.lineTo(x,map.height)}for(let y=0;y<map.height;y+=step){ctx.moveTo(0,y);ctx.lineTo(map.width,y)}ctx.stroke();ctx.restore()}
+function worldToScreen(x,y){const z=game.zoom;return{x:x*z,y:y*z}}
+function drawEntity(e,color){const p=worldToScreen(e.x,e.y);ctx.save();ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x,p.y,6*game.zoom,0,Math.PI*2);ctx.fill();if($('#chkNames').checked){ctx.fillStyle='#111';ctx.font=(11*game.zoom)+'px Tahoma';ctx.fillText(e.name||e.id,p.x+8*game.zoom,p.y-8*game.zoom)}ctx.restore()}
+function drawSpawn(){if(!$('#chkSpawn').checked)return;for(const s of game.spawns){const p=worldToScreen(s.x,s.y);ctx.save();ctx.strokeStyle='rgba(0,128,0,.35)';ctx.beginPath();ctx.arc(p.x,p.y,s.r*game.zoom,0,Math.PI*2);ctx.stroke();ctx.restore()}}
+function drawPath(){if(!$('#chkPath').checked)return;ctx.save();ctx.strokeStyle='rgba(0,0,0,.35)';ctx.beginPath();for(let i=1;i<game.pathTrail.length;i++){const a=worldToScreen(...game.pathTrail[i-1]);const b=worldToScreen(...game.pathTrail[i]);ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y)}ctx.stroke();ctx.restore();if(game.route.length){ctx.save();ctx.strokeStyle='rgba(255,0,0,.45)';ctx.beginPath();let p=worldToScreen(game.player.x,game.player.y);ctx.moveTo(p.x,p.y);for(const wp of game.route){p=worldToScreen(wp.x,wp.y);ctx.lineTo(p.x,p.y)}ctx.stroke();ctx.restore()}if(game.waypoints.length){ctx.save();ctx.strokeStyle='rgba(0,120,0,.55)';ctx.beginPath();for(let i=0;i<game.waypoints.length;i++){const wp=worldToScreen(game.waypoints[i].x,game.waypoints[i].y);if(i===0)ctx.moveTo(wp.x,wp.y);else ctx.lineTo(wp.x,wp.y)}ctx.stroke();ctx.restore()}}
+function drawObstacles(){ctx.save();ctx.fillStyle='rgba(120,120,120,.35)';for(const o of game.obstacles){const p=worldToScreen(o.x,o.y);ctx.fillRect(p.x,p.y,o.w*game.zoom,o.h*game.zoom)}ctx.restore()}
+function drawRadar(){const p=worldToScreen(game.player.x,game.player.y);ctx.save();ctx.strokeStyle='rgba(255,0,0,.2)';ctx.beginPath();ctx.arc(p.x,p.y,game.config.aggroRange*game.zoom,0,Math.PI*2);ctx.stroke();ctx.restore()}
+function draw(){ctx.clearRect(0,0,map.width,map.height);drawGrid();drawObstacles();drawSpawn();if($('#chkNPC').checked)game.npcs.forEach(n=>drawEntity(n,'#888'));if($('#chkMonster').checked)game.mons.forEach(m=>drawEntity(m,m.hp>0?'#d9534f':'#6c757d'));if($('#chkPlayers').checked)drawEntity(game.player,'#0d6efd');drawPath();drawRadar();drawMinimap()}
+function drawMinimap(){const w=mini.width,h=mini.height; mctx.clearRect(0,0,w,h);mctx.fillStyle='#eef6ff';mctx.fillRect(0,0,w,h);const sx=w/game.mapSize.w,sy=h/game.mapSize.h;const dot=(x,y,c)=>{mctx.fillStyle=c;mctx.fillRect(x*sx-1,y*sy-1,3,3)};for(const o of game.obstacles){mctx.fillStyle='rgba(100,100,100,.6)';mctx.fillRect(o.x*sx,o.y*sy,o.w*sx,o.h*sy)}for(const s of game.spawns){mctx.strokeStyle='rgba(0,128,0,.35)';mctx.beginPath();mctx.arc(s.x*sx,s.y*sy,s.r*sx,0,Math.PI*2);mctx.stroke()}game.mons.forEach(m=>dot(m.x,m.y,'#d9534f'));game.npcs.forEach(n=>dot(n.x,n.y,'#777'));dot(game.player.x,game.player.y,'#0d6efd')}
+
+/* --- canvas interactions --- */
+let pressTimer=null,pressStart=0;function canvasPos(evt){const r=map.getBoundingClientRect();const x=(evt.touches?evt.touches[0].clientX:evt.clientX)-r.left;const y=(evt.touches?evt.touches[0].clientY:evt.clientY)-r.top;const z=game.zoom;return{x:x/z,y:y/z}}
+map.addEventListener('pointerdown',e=>{pressStart=performance.now();pressTimer=setTimeout(()=>{const p=canvasPos(e);game.waypoints.push({x:p.x,y:p.y});updateWaypointsTable();showToast('เพิ่ม Waypoint');beep(600,80)},500)});map.addEventListener('pointerup',e=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null;if(performance.now()-pressStart<480){const p=canvasPos(e);aiRouteTo(p.x,p.y);beep(700,60)}}});$('#btnClearWP').onclick=()=>{game.waypoints=[];updateWaypointsTable();showToast('ล้าง Waypoints')}
+
+/* --- spawn & entities --- */
+let idc=100;function pick(a){return a[~~(Math.random()*a.length)]}function randInCircle(cx,cy,r){const t=Math.random()*Math.PI*2;const rr=Math.sqrt(Math.random())*r;return{x:cx+Math.cos(t)*rr,y:cy+Math.sin(t)*rr}}
+function spawnMonsters(n=18){for(let i=0;i<n;i++){const s=game.spawns[~~(Math.random()*game.spawns.length)];const pt=randInCircle(s.x,s.y,s.r);const type=pick(['สไลม์','หมูป่า','งูเขียว','โครงกระดูก','กระต่ายป่า']);const rare=Math.random()<0.12;game.mons.push({id:idc++,name:type,hp:60+~~(Math.random()*70),hpMax:130,atk:[4,10],exp:(10+~~(Math.random()*10))*game.rates.exp,zeny:(5+~~(Math.random()*15)),rare,x:pt.x,y:pt.y,respawn:0})}}
+function spawnFromMap(){const m=MAPS.find(mm=>mm.name===game.mapName);game.spawns=structuredClone(m.spawns);game.obstacles=structuredClone(m.obstacles);game.npcs=structuredClone(m.npcs);game.mons.length=0;spawnMonsters(22)}
+
+/* --- inventory --- */
+const ICONS={red:'🧪',blue:'🔮',horn:'🦌',hide:'🧥',tooth:'🦷',fang:'🦴',gem:'💎',ore:'⛏️'};function label(id){return({horn:'เขากระทิง',hide:'หนังสัตว์',tooth:'เขี้ยวสั้น',fang:'กระดูกงู',red:'ยาแดง',blue:'ยาฟ้า',gem:'คริสตัล',ore:'แร่หยาบ'})[id]||id}
+function addItem(id,name,qty,rarity='common'){const f=game.inv.find(i=>i.id===id&&i.rarity===rarity);if(f)f.qty+=qty;else game.inv.push({id,name,qty,rarity});snapshotState()}
+function useItem(id){const it=game.inv.find(i=>i.id===id&&i.qty>0);if(!it)return;if(id==='red'){it.qty--;game.player.hp=Math.min(game.player.hpMax,game.player.hp+45);log('กินยาแดง +45 HP','ok')}if(id==='blue'){it.qty--;game.player.mp=Math.min(game.player.mpMax,game.player.mp+35);log('ดื่มยาฟ้า +35 MP','ok')}if(it.qty<=0)game.inv=game.inv.filter(i=>i.qty>0);recalcBars();updateInventory();snapshotState()}
+function updateInventory(){const wrap=$('#inv');wrap.innerHTML='';const capacity=25;for(let i=0;i<capacity;i++){const it=game.inv[i];const el=document.createElement('div');el.className='slot';if(it){el.innerHTML=`<div>${ICONS[it.id]||'📦'}</div><div class="qty">x${it.qty}</div>`;el.title=`${label(it.id)} (${it.rarity||'common'})`;el.onclick=()=>useItem(it.id);if(it.rarity==='rare')el.style.outline='2px solid var(--rare)'}wrap.appendChild(el)}const tb=$('#tblItems');tb.innerHTML='';game.inv.forEach((it,i)=>{tb.insertAdjacentHTML('beforeend',`<tr><td>${i+1}</td><td>${label(it.id)}</td><td>${it.rarity||'common'}</td><td>${it.qty}</td></tr>`)});}
+
+/* --- shop / sell / warehouse --- */
+const shopItems=[{id:'red',name:'ยาแดง',price:12},{id:'blue',name:'ยาฟ้า',price:18},{id:'ore',name:'แร่หยาบ',price:20},{id:'gem',name:'คริสตัล',price:120,rare:true}];
+function openShop(){ $('#shopMoney').textContent=game.zeny+' Z'; mountTabs($('#shopPages')); const list=$('#shopList'); list.innerHTML=''; shopItems.forEach(s=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${s.name} ${s.rare?'<span class="chip rare">Rare</span>':''}</td><td>${s.price} Z</td><td><button class="btn" data-id="${s.id}">ซื้อ</button></td>`; list.appendChild(tr); }); list.onclick=(e)=>{ const id=e.target?.dataset?.id; if(!id) return; const s=shopItems.find(x=>x.id===id); if(game.zeny>=s.price){ game.zeny-=s.price; addItem(s.id, label(s.id), 1, s.rare?'rare':'common'); updateInventory(); recalcBars(); $('#shopMoney').textContent=game.zeny+' Z'; log(`ซื้อ ${s.name} -${s.price}Z`,'ok','trade'); } else log('เงินไม่พอ','bad','trade'); };
+  const sl=$('#sellList'); sl.innerHTML=''; game.inv.forEach(it=>{ if(it.rarity==='common'){ const price=(it.id==='ore'?5:3); sl.insertAdjacentHTML('beforeend', `<tr><td>${label(it.id)}</td><td>${it.qty}</td><td>${price} Z/ชิ้น</td><td><button class="btn" data-id="${it.id}">ขาย</button></td></tr>`); } }); sl.onclick=(e)=>{ const id=e.target?.dataset?.id; if(!id) return; const it=game.inv.find(x=>x.id===id && x.rarity==='common'); if(!it) return; const price=(id==='ore'?5:3)*it.qty; game.zeny+=price; log(`ขาย ${label(id)} x${it.qty} +${price}Z`,'ok','trade'); it.qty=0; game.inv=game.inv.filter(x=>x.qty>0); updateInventory(); recalcBars(); openShop(); };
+  $('#btnQuickSell').onclick=()=>{ let got=0; game.inv.forEach(i=>{ if(i.rarity==='common' && i.id!=='red' && i.id!=='blue'){ const price=(i.id==='ore'?5:3)*i.qty; got+=price; i.qty=0; }}); game.inv=game.inv.filter(i=>i.qty>0); if(got>0){ game.zeny+=got; log(`ขายด่วนของทั่วไป +${got}Z`,'ok','trade'); updateInventory(); recalcBars(); openShop(); } };
+  refreshBankUI(); $('#btnDepZ').onclick=()=>{ if(game.zeny>=100){ game.zeny-=100; bank.zeny+=100; saveGlobal(); openShop(); } }; $('#btnWitZ').onclick=()=>{ if(bank.zeny>=100){ bank.zeny-=100; game.zeny+=100; saveGlobal(); openShop(); } }; $('#shopModal').classList.add('show'); }
+$('#shopClose').onclick=()=>$('#shopModal').classList.remove('show');
+function refreshBankUI(){ $('#bankMoney').textContent=bank.zeny+' Z'; const bl=$('#bankList'); bl.innerHTML=''; bank.items.forEach(it=>{ bl.insertAdjacentHTML('beforeend', `<tr><td>${label(it.id)}</td><td>${it.qty}</td><td><button class="btn" data-act="wit" data-id="${it.id}">ถอน x1</button></td></tr>`); }); bl.onclick=(e)=>{ const id=e.target?.dataset?.id; if(!id) return; const f=bank.items.find(x=>x.id===id); if(!f||f.qty<=0) return; f.qty--; if(f.qty===0) bank.items=bank.items.filter(x=>x.qty>0); addItem(id,label(id),1); refreshBankUI(); updateInventory(); saveGlobal(); };
+}
+
+/* --- quests --- */
+function setQuest(id,name,target,need,reward){game.quest={id,name,target,need,got:0,reward};updateQuestUI();snapshotState()}
+function updateQuestUI(){const q=game.quest;const box=$('#questBox');if(!q.id){box.innerHTML='ยังไม่มีภารกิจ';return}box.innerHTML=`<b>${q.name}</b><br>กำจัด <b>${q.target}</b> ${q.got}/${q.need} <br>รางวัล: ${q.reward.zeny} Z ${q.reward.item?`+ ${q.reward.item}`:''}`}
+function tryQuestComplete(){const q=game.quest;if(q.id&&q.got>=q.need){log(`ส่งเควส "${q.name}" สำเร็จ +${q.reward.zeny}Z`,'ok');game.zeny+=q.reward.zeny;if(q.reward.item)addItem('gem','คริสตัล',1,'rare');game.quest={id:null,name:'',target:'',need:0,got:0,reward:{zeny:0,item:null}};updateQuestUI();recalcBars();snapshotState();beep(1320,160)}}
+
+/* --- skills --- */
+let cdPower=0,cdBuff=0,cdDash=0,cdHeal=0,cdWhirl=0;
+function useSkillPower(){if(cdPower>0)return log('สกิลยังคูลดาวน์','warn');cdPower=5*60;game.player.str+=4;setTimeout(()=>game.player.str-=4,2000);log('Power Strike!','ok');beep(980,120)}
+function useSkillBuff(){if(cdBuff>0)return log('สกิลยังคูลดาวน์','warn');cdBuff=22*60;game.player.buff={atk:0.25,spd:0.25,t:20*60};updateBuffHud();log('Battle Cry!','ok');beep(660,120)}
+function useSkillDash(){if(cdDash>0)return log('สกิลยังคูลดาวน์','warn');cdDash=12*60;game.player.spd+=1.2;setTimeout(()=>game.player.spd-=1.2,2000);log('Dash!','ok');beep(840,100)}
+function useSkillHeal(){if(cdHeal>0)return log('สกิลยังคูลดาวน์','warn');if(game.player.mp<10)return log('MP ไม่พอ','warn');cdHeal=10*60;game.player.mp-=10;game.player.hp=Math.min(game.player.hpMax,game.player.hp+30);log('Meditate +HP','ok');recalcBars();beep(520,120)}
+function useSkillWhirl(auto=false){if(cdWhirl>0)return;if(game.player.mp<12){if(!auto)log('MP ไม่พอ','warn');return}cdWhirl=10*60;game.player.mp-=12;let hits=0;for(const m of game.mons){if(m.hp>0&&Math.hypot(game.player.x-m.x,game.player.y-m.y)<=38){const dmg=6+game.player.str+(game.player.buff.atk?game.player.str*game.player.buff.atk:0);m.hp=Math.max(0,m.hp-~~(dmg));hits++;if(m.hp<=0)onKill(m)}}if(hits>0)log(`Whirlwind x${hits}`,'ok');recalcBars();beep(440,100)}
+$('#skillPower').onclick=useSkillPower;$('#skillBuff').onclick=useSkillBuff;$('#skillDash').onclick=useSkillDash;$('#skillHeal').onclick=useSkillHeal;$('#skillWhirl').onclick=()=>useSkillWhirl(false);
+function updateBuffHud(){const b=game.player.buff;$('#buffHud').textContent=b.t>0?`บัฟ: ATK/ความเร็ว +25% (${Math.ceil(b.t/60)}s)`:'ไม่มีบัฟ'}
+
+/* --- skill tree buttons --- */
+function updateTreeUI(){$('#stPower').textContent=game.player.talents.power;$('#stVita').textContent=game.player.talents.vita;$('#stAgil').textContent=game.player.talents.agil;$('#stCrit').textContent=game.player.talents.crit;$('#spLeft').textContent=game.player.sp}
+$$('#skilltree .node .btn').forEach(b=>b.onclick=()=>{const k=b.dataset.skill;if(game.player.sp<=0)return;game.player.talents[k]++;game.player.sp--;recalcDerived();recalcBars();updateTreeUI();snapshotState()});
+
+/* --- env tables --- */
+function updateEnvTables(){const t1=$('#tblPlayers');t1.innerHTML=`<tr><td>${game.player.id}</td><td>${game.player.name}</td><td>${game.player.lv}</td><td>${game.player.job}</td></tr>`;const t2=$('#tblMons');t2.innerHTML='';game.mons.forEach(m=>{t2.insertAdjacentHTML('beforeend',`<tr><td>${m.id}</td><td>${m.name}${m.rare?' <span class=\"chip rare\">Rare</span>':''}</td><td>${m.hp}/${m.hpMax}</td><td>${Math.round(m.exp)}</td><td>${~~m.x},${~~m.y}</td></tr>`)});const t3=$('#tblNPC');t3.innerHTML='';game.npcs.forEach(n=>{t3.insertAdjacentHTML('beforeend',`<tr><td>${n.id}</td><td>${n.name}</td><td>${n.role}</td><td>${~~n.x},${~~n.y}</td></tr>`)});const t4=$('#tblObs');t4.innerHTML='';game.obstacles.forEach((o,i)=>{t4.insertAdjacentHTML('beforeend',`<tr><td>${i+1}</td><td>${o.x}</td><td>${o.y}</td><td>${o.w}</td><td>${o.h}</td></tr>`)});const t5=$('#tblWP');t5.innerHTML='';game.waypoints.forEach((w,i)=>{t5.insertAdjacentHTML('beforeend',`<tr><td>${i+1}</td><td>${~~w.x}</td><td>${~~w.y}</td></tr>`)})}
+
+/* --- AI --- */
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);let target=null;let patrolIdx=0;
+function filterOK(m){return game.config.filter==='all'||m.name===game.config.filter}
+function chooseTarget(){const p=game.player;const cand=game.mons.filter(m=>m.hp>0&&filterOK(m)&&dist(p,m)<=game.config.aggroRange);if(cand.length===0)return null;const pr=game.config.priority;if(pr==='nearest')cand.sort((a,b)=>dist(p,a)-dist(p,b));else if(pr==='lowest')cand.sort((a,b)=>a.hp-b.hp);else if(pr==='exp')cand.sort((a,b)=>b.exp-a.exp);return cand[0]}
+function aiPotion(){const p=game.player;if(!game.config.autoPotion)return;if(p.hp/p.hpMax*100<=game.config.hpThreshold){const red=game.inv.find(i=>i.id==='red'&&i.qty>0);if(red){red.qty--;p.hp=Math.min(p.hpMax,p.hp+40);log('ใช้ยาแดง +40 HP','ok');if(red.qty<=0)game.inv=game.inv.filter(i=>i.qty>0);updateInventory()}}if(p.mp/p.mpMax*100<=game.config.mpThreshold){const blue=game.inv.find(i=>i.id==='blue'&&i.qty>0);if(blue){blue.qty--;p.mp=Math.min(p.mpMax,p.mp+35);log('ใช้ยาฟ้า +35 MP','ok');if(blue.qty<=0)game.inv=game.inv.filter(i=>i.qty>0);updateInventory()}}}
+function aiThreat(){if(!game.config.returnTown&&!game.config.kite)return false;const near=game.mons.filter(m=>m.hp>0&&dist(game.player,m)<=game.config.aggroRange*0.8).length;if(near>=game.config.threatCount){const gate=game.npcs.find(n=>n.role==='Gate');if(gate){aiRouteTo(gate.x,gate.y)}return true}return false}
+function aiRouteTo(x,y){if(!needPathTo(x,y)){game.route=[{x,y}];return}game.route=astar(game.player.x,game.player.y,x,y)}
+function nextPatrol(){if(game.waypoints.length<2)return;patrolIdx=(patrolIdx+1)%game.waypoints.length;const wp=game.waypoints[patrolIdx];aiRouteTo(wp.x,wp.y)}
+function aiMove(dt){if(!game.config.autoMove)return;const p=game.player;if(aiThreat())return;if(game.config.patrol&&(!target||dist(p,target)>game.config.aggroRange)){if(game.route.length===0&&game.waypoints.length>=2){nextPatrol()}}if(target){const want={x:target.x,y:target.y};if(game.route.length===0||Math.random()<0.01)aiRouteTo(want.x,want.y)}if(game.route.length){const wp=game.route[0];const d=Math.hypot(wp.x-p.x,wp.y-p.y);if(d>6){const a=Math.atan2(wp.y-p.y,wp.x-p.x);const spd=(game.player.spd*(1+(game.player.buff.spd||0)));p.x+=Math.cos(a)*spd*dt;p.y+=Math.sin(a)*spd*dt}else{game.route.shift();if(game.config.patrol&&game.route.length===0)nextPatrol()}}game.pathTrail.push([p.x,p.y]);if(game.pathTrail.length>220)game.pathTrail.shift()}
+function aiAttack(){if(!game.config.autoAttack||!target)return;const p=game.player;const d=dist(p,target);if(d<=24&&target.hp>0){if(game.tick%18===0){const hit=75+game.player.dex*3;const roll=Math.random()*100;if(roll>hit){log('พลาด!','warn');return}const critRoll=Math.random()*100<(game.player.crit||5);const base=game.player.str+(game.player.buff.atk?game.player.str*game.player.buff.atk:0);let dmg=~~(base+Math.random()*6);if(critRoll)dmg=~~(dmg*1.7);target.hp=Math.max(0,target.hp-dmg);log(`${critRoll?'คริติคอล! ':''}โจมตี ${target.name} -${dmg}`,critRoll?'ok':'sys');if(target.hp<=0){onKill(target);target.respawn=~~((600+Math.random()*300)*game.rates.respawn);target=null}recalcBars()}}if(game.config.autoAOE){const nearby=game.mons.filter(m=>m.hp>0&&dist(game.player,m)<=38).length;if(nearby>=+aoeCount.value)useSkillWhirl(true)}}
+function aiStep(dt){if(!game.running)return;game.tick++;aiPotion();if((!target||target.hp<=0)&&game.tick%20===0)target=chooseTarget();aiMove(dt);aiAttack();for(const m of game.mons){if(m.hp<=0&&m.respawn>0){m.respawn--;if(m.respawn===0){const s=game.spawns[~~(Math.random()*game.spawns.length)];const pt=randInCircle(s.x,s.y,s.r);Object.assign(m,{x:pt.x,y:pt.y,hp:m.hpMax});log(`${m.name} เกิดใหม่`,'sys')}}}if(game.player.buff.t>0)game.player.buff.t--;updateBuffHud();if(cdPower>0)cdPower--;if(cdBuff>0)cdBuff--;if(cdDash>0)cdDash--;if(cdHeal>0)cdHeal--;if(cdWhirl>0)cdWhirl--}
+
+function onKill(m){game.kills++;game.player.exp+=m.exp;game.zeny+=m.zeny;log(`กำจัด ${m.name}${m.rare?' (Rare)':''} +EXP ${Math.round(m.exp)}, +Z ${m.zeny}`,'ok');if(game.quest.id&&m.name.includes(game.quest.target)){game.quest.got++;updateQuestUI();snapshotState()}const dropPool=[{id:'horn',r:'common'},{id:'hide',r:'common'},{id:'tooth',r:'common'},{id:'red',r:'common'},{id:'blue',r:'common'},{id:'gem',r:'rare'}];const give=Math.random()<(0.22*game.rates.drop)?dropPool[~~(Math.random()*dropPool.length)]:null;if(give){const rare=(m.rare||give.r==='rare')?'rare':'common';addItem(give.id,label(give.id),1,rare);if(rare==='rare')showToast(`ได้รับ ${label(give.id)} (Rare)`);game.loots++;updateInventory()}if(game.player.exp>=game.player.next){game.player.exp-=game.player.next;game.player.lv++;game.player.sp++;game.player.next=Math.round(game.player.next*1.25);game.player.hpMax+=12;game.player.hp=game.player.hpMax;game.player.str++;game.player.agi++;log(`เลเวลอัพ Lv.${game.player.lv}! +1 SP`,'ok');updateTreeUI();beep(1320,180)}if(game.config.autoSell){const shop=game.npcs.find(n=>n.role==='Shop');const near=shop&&dist(game.player,shop)<30;if(near){const junk=game.inv.filter(i=>i.rarity==='common'&&i.id!=='red'&&i.id!=='blue');let got=0;junk.forEach(j=>{const price=3*j.qty;game.zeny+=price;got+=price;j.qty=0});game.inv=game.inv.filter(i=>i.qty>0);if(got>0){log(`ขายของทั่วไป +${got} Z`,'ok','trade')}updateInventory()}}recalcBars();snapshotState();updateEnvTables()}
+
+/* --- NPC interact --- */
+function checkNPCInteract(){const p=game.player;const near=game.npcs.find(n=>dist(p,n)<28);if(!near)return;if(near.role==='Shop'){openShop()}if(near.role==='Quest'){if(!game.quest.id){setQuest(1,'เควส 1: กำจัดสไลม์','สไลม์',8,{zeny:120,item:'คริสตัล'});log('รับภารกิจ: กำจัดสไลม์ 8 ตัว','ok')}else if(game.quest.id&&game.quest.got>=game.quest.need){tryQuestComplete();setTimeout(()=>log('ปลดล็อกเควส 2: เดินทางไป Bamboo Forest','sys'),300)}}if(near.role==='Gate'&&near.to){loadMap(near.to)}if(near.role==='Storage'){openShop()}}
+
+/* --- import/export & slots --- */
+$('#btnExport').onclick=()=>{snapshotState();const data=JSON.stringify({profiles,bank,map:game.mapName});$('#ioBox').value=data;showToast('Export เสร็จ')};
+$('#btnImport').onclick=()=>{try{const obj=JSON.parse($('#ioBox').value||'{}');if(obj.profiles)profiles=obj.profiles;if(obj.bank)Object.assign(bank,obj.bank);if(obj.map)game.mapName=obj.map;saveGlobal();location.reload()}catch(e){alert('JSON ไม่ถูกต้อง')}};
+$$('#config .btn.ghost').forEach(b=>b.onclick=()=>{snapshotState();localStorage.setItem(STORAGE_KEY+':slot'+b.dataset.slot,JSON.stringify({profiles,bank,map:game.mapName}));showToast('บันทึก Slot '+b.dataset.slot)});
+$('#btnLoadA').onclick=()=>{const d=localStorage.getItem(STORAGE_KEY+':slotA');if(d){const obj=JSON.parse(d);profiles=obj.profiles;Object.assign(bank,obj.bank);game.mapName=obj.map;saveGlobal();location.reload()}};$('#btnLoadB').onclick=()=>{const d=localStorage.getItem(STORAGE_KEY+':slotB');if(d){const obj=JSON.parse(d);profiles=obj.profiles;Object.assign(bank,obj.bank);game.mapName=obj.map;saveGlobal();location.reload()}};$('#btnLoadC').onclick=()=>{const d=localStorage.getItem(STORAGE_KEY+':slotC');if(d){const obj=JSON.parse(d);profiles=obj.profiles;Object.assign(bank,obj.bank);game.mapName=obj.map;saveGlobal();location.reload()}};
+
+/* --- character mgmt --- */
+$('#btnNewChar').onclick=()=>{const name=$('#newCharName').value.trim()||('ผู้กล้า_'+(profiles.length+1));profiles.push({name,state:null});activeIdx=profiles.length-1;saveGlobal();populateCharacters();switchCharacter(activeIdx)};
+$('#btnRenameChar').onclick=()=>{const name=prompt('ตั้งชื่อใหม่',profiles[activeIdx].name)||profiles[activeIdx].name;profiles[activeIdx].name=name;game.player.name=name;saveGlobal();populateCharacters();recalcBars()};
+$('#btnDelChar').onclick=()=>{if(profiles.length<=1)return alert('ต้องมีอย่างน้อย 1 ตัวละคร');if(confirm('ลบตัวละครนี้?')){profiles.splice(activeIdx,1);activeIdx=0;saveGlobal();populateCharacters();switchCharacter(activeIdx)}};
+
+/* --- tabs --- */
+function mountTabs(container){const root=typeof container==='string'?$(container):container;const tabs=$$('.tab',root.parentElement);tabs.forEach(b=>b.onclick=()=>{const id=b.dataset.tab;tabs.forEach(x=>x.classList.toggle('active',x===b));$$('.tabpages>section',root).forEach(s=>s.classList.toggle('active',s.id===id))})}
+mountTabs($('#tabpages'));mountTabs($('#env-pages'));
+(function(){const tabs=$$('.logwrap .tab');tabs.forEach(b=>b.onclick=()=>{const id=b.dataset.tab;tabs.forEach(x=>x.classList.toggle('active',x===b));$$('.logwrap .log').forEach(s=>s.classList.toggle('active',s.id===id))})})();
+
+/* --- loop --- */
+let last=performance.now();function loop(t){const dt=Math.min(33,t-last)/16.67*(game.speed||1);last=t;aiStep(dt);draw();if(game.tick%60===0)checkNPCInteract();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+
+/* --- toast --- */
+const toast=$('#toast');let toastTO=null;function showToast(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(toastTO);toastTO=setTimeout(()=>toast.classList.remove('show'),1600)}
+
+/* --- map load & UI update --- */
+function loadMap(name){const m=MAPS.find(x=>x.name===name)||MAPS[0];game.mapName=m.name;game.mapSize=m.size;spawnFromMap();buildGrid();game.player.x=clamp(game.player.x,40,game.mapSize.w-40);game.player.y=clamp(game.player.y,40,game.mapSize.h-40);game.route.length=0;updateEnvTables();recalcBars();log(`ย้ายแผนที่ไปยัง ${name}`,'ok');saveGlobal();resizeMap()}
+function updateAllUI(){hpTh.value=game.config.hpThreshold;hpThVal.textContent=hpTh.value;mpTh.value=game.config.mpThreshold;mpThVal.textContent=mpTh.value;aggro.value=game.config.aggroRange;aggroVal.textContent=aggro.value;radarVal.textContent=aggro.value+'px';lootRange.value=game.config.lootRange;lootVal.textContent=lootRange.value;$('#filterMon').value=game.config.filter;$('#autoAOE').checked=!!game.config.autoAOE;threat.value=game.config.threatCount;threatVal.textContent=threat.value;speed.value=game.speed||1;speedVal.textContent=(game.speed||1).toFixed(1)+'x';$('#server').value=game.server;recalcDerived();updateInventory();recalcBars();updateEnvTables();updateQuestUI();updateTreeUI()}
+function init(){loadGlobal();populateMapSelect();populateCharacters();if(!profiles[activeIdx].state){profiles[activeIdx].state=baseState();profiles[activeIdx].state.player.name=profiles[activeIdx].name}game=JSON.parse(JSON.stringify(profiles[activeIdx].state));recalcDerived();loadMap(game.mapName);updateAllUI();log('โหลดระบบ v3.6 สำเร็จ','sys')}init();
+
+/* --- hotkeys --- */
+addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;const k=e.key.toLowerCase();if(k==='1')useSkillPower();else if(k==='2')useSkillBuff();else if(k==='3')useSkillDash();else if(k==='4')useSkillHeal();else if(k==='5')useSkillWhirl(false);else if(k==='q')useItem('red');else if(k==='e')useItem('blue')});
+</script></body>
+</html>
